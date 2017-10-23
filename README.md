@@ -34,5 +34,5 @@ Licensed under the [Apache License, Version 2.0](LICENSE).
 ## Similar Projects
 
 * [HTTrack2Arc](https://github.com/arquivo/httrack2arc)
-* [Netarchvie Suite migrations](https://sbforge.org/sonar/drilldown/measures/1?metric=lines&rids%5B%5D=16)
+* [Netarchive Suite migrations](https://sbforge.org/sonar/drilldown/measures/1?metric=lines&rids%5B%5D=16)
 * [warc-tools httrack2warc.sh](https://code.google.com/archive/p/warc-tools/source/default/source?page=6)

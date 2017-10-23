@@ -77,14 +77,14 @@ public class HtsCache {
         return null;
     }
 
-    static HtsCache load(Path accessDir, Path preserveDir) throws IOException {
+    static HtsCache load(Path sourceDir, Path altCacheDir) throws IOException {
         InputStream htsLog = null;
         InputStream doit = null;
         InputStream txt = null;
         InputStream ioinfo = null;
 
         try {
-            for (Path dir : new Path[]{accessDir, preserveDir}) {
+            for (Path dir : new Path[]{sourceDir, altCacheDir}) {
                 if (dir == null) continue;
 
                 htsLog = tryOpen(htsLog, dir.resolve("hts-log.txt"));

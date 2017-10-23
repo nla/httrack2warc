@@ -3,7 +3,6 @@ package au.gov.nla.httrack2warc;
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +28,7 @@ class WarcWriter implements Closeable {
     private final RotatingFile warcRotor;
     private final BufferedWriter cdxWriter;
     private final Path cdxPath, tmpCdxPath;
+    private final Compression compression = Compression.GZIP;
     boolean cdx11Format = true;
 
     public WarcWriter(String warcFilePattern, Path cdxPath) throws IOException {
@@ -159,16 +159,18 @@ class WarcWriter implements Closeable {
         cdxWriter.write(cdxLine);
     }
 
-    RecordPosition writeRecord(String header, Body body) throws IOException {
+    RecordPosition writeRecord(String header, StreamWriter body) throws IOException {
         if (warcRotor.channel == null) {
             warcRotor.rotateIfNecessary();
         }
         long startOfRecord = warcRotor.channel.position();
-        GZIPOutputStream gzos = new GZIPOutputStream(Channels.newOutputStream(warcRotor.channel));
-        gzos.write(header.getBytes(UTF_8));
-        body.writeTo(gzos);
-        gzos.write("\r\n\r\n".getBytes(UTF_8));
-        gzos.finish();
+
+        compression.writeMember(warcRotor.channel, stream -> {
+            stream.write(header.getBytes(UTF_8));
+            body.writeTo(stream);
+            stream.write("\r\n\r\n".getBytes(UTF_8));
+        });
+
         long endOfRecord = warcRotor.channel.position();
         return new RecordPosition(warcRotor.currentFilePath, startOfRecord, endOfRecord);
     }
@@ -189,7 +191,4 @@ class WarcWriter implements Closeable {
         }
     }
 
-    interface Body {
-        void writeTo(OutputStream gzos) throws IOException;
-    }
 }

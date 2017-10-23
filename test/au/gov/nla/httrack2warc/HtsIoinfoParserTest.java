@@ -21,7 +21,7 @@ public class HtsIoinfoParserTest {
                     "Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, image/svg+xml, */*\r\n" +
                     "Accept-Language: en, *\r\n" +
                     "Accept-Charset: iso-8859-1, *\r\n" +
-                    "Accept-Encoding: gzip, deflate, compress, identity\r\n", ioinfo.header);
+                    "Accept-Encoding: gzip, deflate, compress, identity\r\n\r\n", ioinfo.header);
 
             assertTrue(ioinfo.parseRecord());
             assertFalse(ioinfo.request);
@@ -35,7 +35,7 @@ public class HtsIoinfoParserTest {
                     "Server: Microsoft-IIS/5.0\r\n" +
                     "Accept-Ranges: bytes\r\n" +
                     "Last-Modified: Mon, 24 Mar 2003 04:02:30 GMT\r\n" +
-                    "ETag: \"5af18630baf1c21:8ad\"\r\n", ioinfo.header);
+                    "ETag: \"5af18630baf1c21:8ad\"\r\n\r\n", ioinfo.header);
 
             while (ioinfo.parseRecord()) {
                 assertNotNull(ioinfo.filename);

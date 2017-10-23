@@ -1,4 +1,6 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
+
+import au.gov.nla.httrack2warc.ParsingException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,7 +56,7 @@ public class HtsCache {
                 entry.timestamp = timestamp;
                 entry.mime = parser.mime();
                 entry.url = parser.url();
-                entry.via = parser.via();
+                entry.via = parser.referrer();
             }
         }
 
@@ -77,7 +79,7 @@ public class HtsCache {
         return null;
     }
 
-    static HtsCache load(Path sourceDir, Path altCacheDir) throws IOException {
+    public static HtsCache load(Path sourceDir, Path altCacheDir) throws IOException {
         InputStream htsLog = null;
         InputStream doit = null;
         InputStream txt = null;

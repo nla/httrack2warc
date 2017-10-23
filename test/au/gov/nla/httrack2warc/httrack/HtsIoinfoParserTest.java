@@ -1,4 +1,4 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
 
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ public class HtsTxtParserTest {
             assertTrue(parser.readRecord());
             assertEquals(LocalTime.of(16, 24, 26), parser.time());
             assertEquals("http://www-test.nla.gov.au/xinq/", parser.url());
-            assertNull(parser.via());
+            assertNull(parser.referrer());
             assertEquals("text/html", parser.mime());
             assertEquals("/home/aosborne/tmp/pandas/working/1/20170725-1623/www-test.nla.gov.au/xinq/index.html", parser.localfile());
 
@@ -31,7 +31,7 @@ public class HtsTxtParserTest {
             assertTrue(parser.readRecord());
             assertEquals(LocalTime.of(1, 0, 14), parser.time());
             assertEquals("http://www.industry.gov.au/acreagereleases/ar_home.html", parser.url());
-            assertNull(parser.via());
+            assertNull(parser.referrer());
             assertEquals("text/html", parser.mime());
             assertEquals("/pandas/working/13982/20030403/www.industry.gov.au/acreagereleases/ar_home.html", parser.localfile());
 

@@ -1,10 +1,9 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
 
 import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
 
 public class HtsLogParserTest {

@@ -1,5 +1,6 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
 
+import au.gov.nla.httrack2warc.ParsingException;
 import org.netpreserve.urlcanon.ByteString;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
@@ -53,11 +54,11 @@ public class HtsTxtParser implements Closeable {
         return true;
     }
 
-    LocalTime time() {
+    public LocalTime time() {
         return LocalTime.parse(matcher.group("time"));
     }
 
-    String url() {
+    public String url() {
         return fixupUrl(matcher.group("url"));
     }
 
@@ -74,7 +75,7 @@ public class HtsTxtParser implements Closeable {
         return url.toString();
     }
 
-    String via() {
+    public String referrer() {
         String raw = matcher.group("via");
         if (raw.isEmpty()) {
             return null;
@@ -82,7 +83,7 @@ public class HtsTxtParser implements Closeable {
         return fixupUrl(raw);
     }
 
-    String mime() {
+    public String mime() {
         return matcher.group("mime");
     }
 

@@ -1,4 +1,6 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
+
+import au.gov.nla.httrack2warc.ParsingException;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,5 +1,8 @@
 package au.gov.nla.httrack2warc;
 
+import au.gov.nla.httrack2warc.httrack.HtsCache;
+import au.gov.nla.httrack2warc.httrack.HtsCacheEntry;
+
 import java.io.*;
 import java.net.URLEncoder;
 import java.nio.file.*;
@@ -84,7 +87,7 @@ public class Pandora2Warc {
 
         // try the HTTrack cache metadata if available
         if (htsCacheEntryEntry != null) {
-            return htsCacheEntryEntry.mime;
+            return htsCacheEntryEntry.getMime();
         }
 
         // if all else fails guess based on the file extension
@@ -177,8 +180,8 @@ public class Pandora2Warc {
                         Path path = instanceDir.relativize(file); // "example.org/index.html"
                         HtsCacheEntry htsCacheEntry = htsCache.get(encodePath(path));
                         LocalDateTime date;
-                        if (htsCacheEntry != null && htsCacheEntry.timestamp != null) {
-                            date = htsCacheEntry.timestamp;
+                        if (htsCacheEntry != null && htsCacheEntry.getTimestamp() != null) {
+                            date = htsCacheEntry.getTimestamp();
                         } else {
                             date = instanceDate;
                         }
@@ -195,19 +198,19 @@ public class Pandora2Warc {
                             warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.responseHeader != null) {
+                        if (htsCacheEntry != null && htsCacheEntry.getResponseHeader() != null) {
                             warc.writeResponseRecord(url, contentType, digest, responseUuid, instant, contentLength,
-                                    htsCacheEntry.responseHeader, file);
+                                    htsCacheEntry.getResponseHeader(), file);
                         } else {
                             warc.writeResourceRecord(url, contentType, digest, responseUuid, instant, contentLength, file);
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.requestHeader != null) {
-                            warc.writeRequestRecord(url, responseUuid, instant, htsCacheEntry.requestHeader);
+                        if (htsCacheEntry != null && htsCacheEntry.getRequestHeader() != null) {
+                            warc.writeRequestRecord(url, responseUuid, instant, htsCacheEntry.getRequestHeader());
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.via != null) {
-                            warc.writeMetadataRecord(url, responseUuid, instant, htsCacheEntry.via);
+                        if (htsCacheEntry != null && htsCacheEntry.getReferrer() != null) {
+                            warc.writeMetadataRecord(url, responseUuid, instant, htsCacheEntry.getReferrer());
                         }
 
                     }

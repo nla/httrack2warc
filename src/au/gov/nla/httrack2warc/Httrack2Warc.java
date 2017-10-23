@@ -1,5 +1,7 @@
 package au.gov.nla.httrack2warc;
 
+import au.gov.nla.httrack2warc.httrack.HtsCache;
+import au.gov.nla.httrack2warc.httrack.HtsCacheEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,16 +49,16 @@ public class Httrack2Warc {
 
                     // use the URL from the HTTrack log if available, otherwise use the path
                     String url;
-                    if (htsCacheEntry.url != null) {
-                        url = htsCacheEntry.url;
+                    if (htsCacheEntry != null && htsCacheEntry.getUrl() != null) {
+                        url = htsCacheEntry.getUrl();
                     } else {
                         url = "http://" + encodedPath;
                     }
 
                     // use the date from the HTTrack log if available, fallback to crawl start time
                     LocalDateTime localDate;
-                    if (htsCacheEntry != null && htsCacheEntry.timestamp != null) {
-                        localDate = htsCacheEntry.timestamp;
+                    if (htsCacheEntry != null && htsCacheEntry.getTimestamp() != null) {
+                        localDate = htsCacheEntry.getTimestamp();
                     } else {
                         localDate = htsCache.getLaunchTime();
                     }
@@ -64,8 +66,8 @@ public class Httrack2Warc {
 
                     // use content type if we have it, otherwise guess based on the file extension
                     String contentType;
-                    if (htsCacheEntry != null && htsCacheEntry.mime != null) {
-                        contentType = htsCacheEntry.mime;
+                    if (htsCacheEntry != null && htsCacheEntry.getMime() != null) {
+                        contentType = htsCacheEntry.getMime();
                     } else {
                         contentType = mimeTypes.forPath(file);
                         if (contentType == null) {
@@ -81,19 +83,19 @@ public class Httrack2Warc {
                         warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
                     }
 
-                    if (htsCacheEntry != null && htsCacheEntry.responseHeader != null) {
+                    if (htsCacheEntry != null && htsCacheEntry.getResponseHeader() != null) {
                         warc.writeResponseRecord(url, contentType, digest, responseRecordId, date, contentLength,
-                                htsCacheEntry.responseHeader, file);
+                                htsCacheEntry.getResponseHeader(), file);
                     } else {
                         warc.writeResourceRecord(url, contentType, digest, responseRecordId, date, contentLength, file);
                     }
 
-                    if (htsCacheEntry != null && htsCacheEntry.requestHeader != null) {
-                        warc.writeRequestRecord(url, responseRecordId, date, htsCacheEntry.requestHeader);
+                    if (htsCacheEntry != null && htsCacheEntry.getRequestHeader() != null) {
+                        warc.writeRequestRecord(url, responseRecordId, date, htsCacheEntry.getRequestHeader());
                     }
 
-                    if (htsCacheEntry != null && htsCacheEntry.via != null) {
-                        warc.writeMetadataRecord(url, responseRecordId, date, htsCacheEntry.via);
+                    if (htsCacheEntry != null && htsCacheEntry.getReferrer() != null) {
+                        warc.writeMetadataRecord(url, responseRecordId, date, htsCacheEntry.getReferrer());
                     }
 
                     return FileVisitResult.CONTINUE;

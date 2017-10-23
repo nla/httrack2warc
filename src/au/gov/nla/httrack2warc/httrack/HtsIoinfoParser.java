@@ -1,4 +1,6 @@
-package au.gov.nla.httrack2warc;
+package au.gov.nla.httrack2warc.httrack;
+
+import au.gov.nla.httrack2warc.ParsingException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +23,7 @@ class HtsIoinfoParser implements Closeable {
         this(new BufferedReader(new InputStreamReader(ioinfoStream, StandardCharsets.ISO_8859_1)));
     }
 
-    boolean parseRecord() throws IOException {
+    public boolean parseRecord() throws IOException {
         String header = reader.readLine();
         if (header == null) {
             return false;

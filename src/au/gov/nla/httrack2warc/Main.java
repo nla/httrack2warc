@@ -78,6 +78,12 @@ public class Main {
             }
         }
 
+        if (crawldir == null) {
+            System.err.println("httrack2warc: A crawl directory must be specified.");
+            System.err.println("Try 'httrack2warc --help' for more information.");
+            System.exit(1);
+        }
+
         httrack2Warc.convert(crawldir);
     }
 }

@@ -16,6 +16,9 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public class Httrack2Warc {
@@ -28,6 +31,11 @@ public class Httrack2Warc {
     private MimeTypes mimeTypes = new MimeTypes();
     private StringBuilder extraWarcInfo = new StringBuilder();
     private Compression compression = Compression.GZIP;
+    
+    private Set<String> exclusions = new HashSet<>(Arrays.asList(
+            "backblue.gif", "hts-log.txt", "fade.gif", "index.html", "hts-ioinfo.txt",
+            "hts-cache/new.txt", "hts-cache/new.zip", "hts-cache/doit.log", "hts-cache/new.lst",
+            "hts-cache/old.txt", "hts-cache/old.zip", "hts-cache/old.lst"));
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -75,7 +83,12 @@ public class Httrack2Warc {
                         }
                     }
 
-                    log.info("() -> ()", relativePath, url);
+                    if (exclusions.contains(relativePath.toString().toLowerCase())) {
+                        log.info(relativePath + " excluded");
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    log.info("{} -> {}", relativePath, url);
 
                     // we only allow rotations at the start of each set of records to ensure they're always
                     // kept together in the same file

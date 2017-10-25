@@ -1,17 +1,13 @@
 package au.gov.nla.httrack2warc;
 
-import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.zip.GZIPOutputStream;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -22,47 +18,21 @@ import static java.time.ZoneOffset.UTC;
  */
 class WarcWriter implements Closeable {
     private static final DateTimeFormatter WARC_DATE = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).withZone(UTC);
-    private static final DateTimeFormatter ARC_DATE = DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.US).withZone(UTC);
 
     private static final long warcRotationSize = 1048576000;
     private final RotatingFile warcRotor;
-    private final BufferedWriter cdxWriter;
-    private final Path cdxPath, tmpCdxPath;
+    private final CdxWriter cdxWriter;
     private final Compression compression = Compression.GZIP;
-    boolean cdx11Format = true;
 
-    public WarcWriter(String warcFilePattern, Path cdxPath) throws IOException {
-        this.cdxPath = cdxPath;
-        tmpCdxPath = Paths.get(cdxPath.toString() + ".tmp");
+    public WarcWriter(String warcFilePattern, CdxWriter cdxWriter) throws IOException {
         this.warcRotor = new RotatingFile(warcFilePattern, warcRotationSize);
-        this.cdxWriter = Files.newBufferedWriter(tmpCdxPath, UTF_8);
-        cdxWriter.write(" CDX N b a m s k r M S V g\n");
+        this.cdxWriter = cdxWriter;
     }
 
-    @Override
-    public void close() throws IOException {
-        Files.deleteIfExists(tmpCdxPath);
-    }
+
 
     public void finish() throws IOException {
-        externalSort(tmpCdxPath, cdxPath);
-    }
-
-    private void externalSort(Path source, Path destination) throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("sort", source.toString());
-        pb.environment().put("LC_ALL", "C");
-        pb.environment().put("LANG", "C");
-        pb.redirectOutput(destination.toFile());
-        pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-        int exitValue = 0;
-        try {
-            exitValue = pb.start().waitFor();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        if (exitValue != 0) {
-            throw new RuntimeException("sort returned non-zero exit value: " + exitValue);
-        }
+        if (cdxWriter != null) cdxWriter.finish();
     }
 
     boolean rotateIfNecessary() throws IOException {
@@ -127,7 +97,10 @@ class WarcWriter implements Closeable {
             gzos.write(responseHeaderBytes);
             Files.copy(file, gzos);
         });
-        writeCdxLine(url, contentType, digest, date, recordPosition);
+        if (cdxWriter != null) {
+            Path filename = recordPosition.file.getFileName();
+            cdxWriter.writeLine(url, contentType, digest, date, recordPosition, filename);
+        }
     }
 
     void writeResourceRecord(String url, String contentType, String digest, UUID uuid, Instant date,
@@ -142,21 +115,10 @@ class WarcWriter implements Closeable {
                 "Content-Length: " + contentLength + "\r\n" +
                 "\r\n";
         RecordPosition recordPosition = writeRecord(header, gzos -> Files.copy(body, gzos));
-        writeCdxLine(url, contentType, digest, date, recordPosition);
-    }
-
-    private void writeCdxLine(String url, String contentType, String digest, Instant date, RecordPosition recordPosition) throws IOException {
-        String cdxLine;
-        Path filename = recordPosition.file.getFileName();
-        if (cdx11Format) {
-            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " 200 " +
-                    digest + " - - " + recordPosition.length() + " " + recordPosition.start + " " + filename + "\n";
-        } else {
-            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " 200 " +
-                    digest + " - " + recordPosition.start + " " + filename + "\n";
+        if (cdxWriter != null) {
+            Path filename = recordPosition.file.getFileName();
+            cdxWriter.writeLine(url, contentType, digest, date, recordPosition, filename);
         }
-        System.out.print(cdxLine);
-        cdxWriter.write(cdxLine);
     }
 
     RecordPosition writeRecord(String header, StreamWriter body) throws IOException {
@@ -173,6 +135,14 @@ class WarcWriter implements Closeable {
 
         long endOfRecord = warcRotor.channel.position();
         return new RecordPosition(warcRotor.currentFilePath, startOfRecord, endOfRecord);
+    }
+
+    @Override
+    public void close() throws IOException {
+        warcRotor.close();
+        if (cdxWriter != null) {
+            cdxWriter.close();
+        }
     }
 
     static class RecordPosition {

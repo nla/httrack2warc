@@ -166,7 +166,7 @@ public class Pandora2Warc {
         Instant launchInstant = launchDateTime.atZone(PANDORA_TIMEZONE).toInstant();
         String warcInfo = formatWarcInfo(pi, dateString, htsCache);
 
-        try (WarcWriter warc = new WarcWriter(warcFilePattern, cdxFile)) {
+        try (WarcWriter warc = new WarcWriter(warcFilePattern, new CdxWriter(cdxFile))) {
             Path workingDir = instanceDir.getParent().getParent();
 
             Files.walkFileTree(instanceDir, new SimpleFileVisitor<Path>() {

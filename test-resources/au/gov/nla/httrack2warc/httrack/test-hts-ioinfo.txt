@@ -62,7 +62,7 @@ request for www.industry.gov.au/acreagereleases/Images/help_on.jpg:
 <<< Accept-Encoding: gzip, deflate, compress, identity
 
 
-request for www.industry.gov.au/acreagereleases/Images/ack_on.jpg:
+[1] request for www.industry.gov.au/acreagereleases/Images/ack_on.jpg:
 <<< GET /acreagereleases/Images/ack_on.jpg HTTP/1.1
 <<< Referer: http://www.industry.gov.au/acreagereleases/ar_home.html
 <<< Cookie: $Version=1; WEBTRENDS_ID=192.199.45.6-984156736.29554984; $Path=/
@@ -75,7 +75,7 @@ request for www.industry.gov.au/acreagereleases/Images/ack_on.jpg:
 <<< Accept-Encoding: gzip, deflate, compress, identity
 
 
-response for www.industry.gov.au/acreagereleases/Images/help_on.jpg:
+[1] response for www.industry.gov.au/acreagereleases/Images/help_on.jpg:
 code=200
 >>> HTTP/1.1 200 OK
 >>> Connection: close

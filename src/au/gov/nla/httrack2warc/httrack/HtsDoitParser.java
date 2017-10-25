@@ -33,11 +33,11 @@ class HtsDoitParser {
             if (outputDir == null) {
                 outputDir = m.group(2);
             }
+            if (!outputDir.endsWith("/")) {
+                outputDir += "/";
+            }
         } else {
             outputDir = "";
-        }
-        if (!outputDir.endsWith("/")) {
-            outputDir += "/";
         }
 
         String timestampLine = doitReader.readLine();

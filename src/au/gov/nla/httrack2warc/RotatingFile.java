@@ -6,8 +6,10 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 class RotatingFile implements Closeable {
@@ -29,7 +31,7 @@ class RotatingFile implements Closeable {
         }
         if (channel == null) {
             currentFilePath = Paths.get(String.format(namePattern, seq));
-            channel = Files.newByteChannel(currentFilePath, CREATE, WRITE);
+            channel = Files.newByteChannel(currentFilePath, CREATE, WRITE, TRUNCATE_EXISTING);
             seq += 1;
             return true;
         }

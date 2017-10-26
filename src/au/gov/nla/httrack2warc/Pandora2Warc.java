@@ -1,7 +1,6 @@
 package au.gov.nla.httrack2warc;
 
-import au.gov.nla.httrack2warc.httrack.HtsCache;
-import au.gov.nla.httrack2warc.httrack.HtsCacheEntry;
+import au.gov.nla.httrack2warc.httrack.HttrackRecord;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -77,7 +76,7 @@ public class Pandora2Warc {
        return panaccessCacheValue;
     }
 
-    private String mimeForFile(Path f, HtsCacheEntry htsCacheEntryEntry) throws IOException {
+    private String mimeForFile(Path f, HttrackRecord httrackRecord) throws IOException {
         String filename = f.getFileName().toString();
         Path panaccessMimeTypes = f.getParent().resolve(".panaccess-mime.types");
         String type = readPanaccessCache(panaccessMimeTypes).get(filename);
@@ -86,8 +85,8 @@ public class Pandora2Warc {
         }
 
         // try the HTTrack cache metadata if available
-        if (htsCacheEntryEntry != null) {
-            return htsCacheEntryEntry.getMime();
+        if (httrackRecord != null) {
+            return httrackRecord.getMime();
         }
 
         // if all else fails guess based on the file extension
@@ -153,6 +152,7 @@ public class Pandora2Warc {
         return LocalDateTime.parse(date, PANDAS_DATE);
     }
 
+    /*
     void convertInstance(Path instanceDir, Path preserveDir, Path destDir) throws IOException {
         String pi = instanceDir.getParent().getFileName().toString();
         String dateString = instanceDir.getFileName().toString();
@@ -178,15 +178,15 @@ public class Pandora2Warc {
 
                         // sometimes we can get date metadata from HTTrack cache, but fallback to the instance date otherwise
                         Path path = instanceDir.relativize(file); // "example.org/index.html"
-                        HtsCacheEntry htsCacheEntry = htsCache.get(encodePath(path));
+                        HttrackRecord httrackRecord = htsCache.get(encodePath(path));
                         LocalDateTime date;
-                        if (htsCacheEntry != null && htsCacheEntry.getTimestamp() != null) {
-                            date = htsCacheEntry.getTimestamp();
+                        if (httrackRecord != null && httrackRecord.getTimestamp() != null) {
+                            date = httrackRecord.getTimestamp();
                         } else {
                             date = instanceDate;
                         }
 
-                        String contentType = mimeForFile(file, htsCacheEntry);
+                        String contentType = mimeForFile(file, httrackRecord);
                         String digest = calculateSha1Digest(file);
                         UUID responseUuid = UUID.randomUUID();
                         Instant instant = date.atZone(PANDORA_TIMEZONE).toInstant();
@@ -198,19 +198,19 @@ public class Pandora2Warc {
                             warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.getResponseHeader() != null) {
+                        if (httrackRecord != null && httrackRecord.getResponseHeader() != null) {
                             warc.writeResponseRecord(url, contentType, digest, responseUuid, instant, contentLength,
-                                    htsCacheEntry.getResponseHeader(), file);
+                                    httrackRecord.getResponseHeader(), file);
                         } else {
                             warc.writeResourceRecord(url, contentType, digest, responseUuid, instant, contentLength, file);
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.getRequestHeader() != null) {
-                            warc.writeRequestRecord(url, responseUuid, instant, htsCacheEntry.getRequestHeader());
+                        if (httrackRecord != null && httrackRecord.getRequestHeader() != null) {
+                            warc.writeRequestRecord(url, responseUuid, instant, httrackRecord.getRequestHeader());
                         }
 
-                        if (htsCacheEntry != null && htsCacheEntry.getReferrer() != null) {
-                            warc.writeMetadataRecord(url, responseUuid, instant, htsCacheEntry.getReferrer());
+                        if (httrackRecord != null && httrackRecord.getReferrer() != null) {
+                            warc.writeMetadataRecord(url, responseUuid, instant, httrackRecord.getReferrer());
                         }
 
                     }
@@ -258,4 +258,5 @@ public class Pandora2Warc {
         }
         new Pandora2Warc().convertInstance(instanceDir, preserveDir, destDir);
     }
+    */
 }

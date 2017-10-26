@@ -2,7 +2,8 @@ package au.gov.nla.httrack2warc;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -28,8 +29,6 @@ class WarcWriter implements Closeable {
         this.warcRotor = new RotatingFile(warcFilePattern, warcRotationSize);
         this.cdxWriter = cdxWriter;
     }
-
-
 
     public void finish() throws IOException {
         if (cdxWriter != null) cdxWriter.finish();
@@ -81,7 +80,7 @@ class WarcWriter implements Closeable {
     }
 
     void writeResponseRecord(String url, String contentType, String digest, UUID uuid, Instant date,
-                             long contentLength, String responseHeader, Path file) throws IOException {
+                             long contentLength, String responseHeader, InputStream body) throws IOException {
         byte[] responseHeaderBytes = responseHeader.getBytes(ISO_8859_1);
         long blockLength = contentLength + responseHeaderBytes.length;
         String header = "WARC/1.0\r\n" +
@@ -95,7 +94,7 @@ class WarcWriter implements Closeable {
                 "\r\n";
         RecordPosition recordPosition = writeRecord(header, gzos -> {
             gzos.write(responseHeaderBytes);
-            Files.copy(file, gzos);
+            copyStream(body, gzos);
         });
         if (cdxWriter != null) {
             Path filename = recordPosition.file.getFileName();
@@ -104,7 +103,7 @@ class WarcWriter implements Closeable {
     }
 
     void writeResourceRecord(String url, String contentType, String digest, UUID uuid, Instant date,
-                             long contentLength, Path body) throws IOException {
+                             long contentLength, InputStream body) throws IOException {
         String header = "WARC/1.0\r\n" +
                 "WARC-Type: resource\r\n" +
                 "WARC-Target-URI: " + url + "\r\n" +
@@ -114,7 +113,7 @@ class WarcWriter implements Closeable {
                 "Content-Type: " + contentType + "\r\n" +
                 "Content-Length: " + contentLength + "\r\n" +
                 "\r\n";
-        RecordPosition recordPosition = writeRecord(header, gzos -> Files.copy(body, gzos));
+        RecordPosition recordPosition = writeRecord(header, gzos -> copyStream(body, gzos));
         if (cdxWriter != null) {
             Path filename = recordPosition.file.getFileName();
             cdxWriter.writeLine(url, contentType, digest, date, recordPosition, filename);
@@ -130,7 +129,7 @@ class WarcWriter implements Closeable {
         compression.writeMember(warcRotor.channel, stream -> {
             stream.write(header.getBytes(UTF_8));
             body.writeTo(stream);
-            stream.write("\r\n\r\n".getBytes(UTF_8));
+            stream.write("\r\n".getBytes(UTF_8));
         });
 
         long endOfRecord = warcRotor.channel.position();
@@ -158,6 +157,15 @@ class WarcWriter implements Closeable {
 
         long length() {
             return end - start;
+        }
+    }
+
+    private static void copyStream(InputStream is, OutputStream os) throws IOException {
+        byte[] buffer = new byte[8192];
+        for (;;) {
+            int n = is.read(buffer);
+            if (n < 0) break;
+            os.write(buffer, 0, n);
         }
     }
 

@@ -1,7 +1,6 @@
 package au.gov.nla.httrack2warc;
 
-import au.gov.nla.httrack2warc.httrack.HtsCache;
-import au.gov.nla.httrack2warc.httrack.HtsCacheEntry;
+import au.gov.nla.httrack2warc.httrack.HttrackCrawl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,11 +9,9 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -39,79 +36,51 @@ public class Httrack2Warc {
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
-        HtsCache htsCache = HtsCache.load(sourceDirectory, alternateCacheDirectory);
-        Instant launchInstant = htsCache.getLaunchTime().atZone(timezone).toInstant();
-
-        String warcInfo = formatWarcInfo(htsCache);
 
         try (WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), null)) {
-            Files.walkFileTree(sourceDirectory, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    Path relativePath = sourceDirectory.relativize(file);
-                    String encodedPath = encodePath(relativePath);
-                    HtsCacheEntry htsCacheEntry = htsCache.get(encodedPath);
-                    UUID responseRecordId = UUID.randomUUID();
-                    long contentLength = Files.size(file);
-                    String digest = sha1Digest(file);
+            HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
+            String warcInfo = formatWarcInfo(crawl);
+            Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
 
-                    // use the URL from the HTTrack log if available, otherwise use the path
-                    String url;
-                    if (htsCacheEntry != null && htsCacheEntry.getUrl() != null) {
-                        url = htsCacheEntry.getUrl();
+            crawl.forEach(record -> {
+                UUID responseRecordId = UUID.randomUUID();
+
+                // use content type if we have it, otherwise guess based on the file extension
+                String contentType = record.getMime();
+                if (contentType == null) contentType = mimeTypes.forFilename(record.getFilename());
+                if (contentType == null) contentType = "application/octet-stream";
+
+                log.info("{} -> {}", record.getFilename(), record.getUrl());
+
+                long contentLength = record.getSize();
+                String digest;
+                try (InputStream stream = record.openStream()) {
+                    digest = sha1Digest(stream);
+                }
+
+                // we only allow rotations at the start of each set of records to ensure they're always
+                // kept together in the same file
+                if (warc.rotateIfNecessary()) {
+                    warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
+                }
+
+                Instant warcDate = record.getTimestamp().atZone(timezone).toInstant();
+
+                try (InputStream stream = record.openStream()) {
+                    if (record.getResponseHeader() != null) {
+                        warc.writeResponseRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength,
+                                record.getResponseHeader(), stream);
                     } else {
-                        url = "http://" + encodedPath;
+                        warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, stream);
                     }
+                }
 
-                    // use the date from the HTTrack log if available, fallback to crawl start time
-                    LocalDateTime localDate;
-                    if (htsCacheEntry != null && htsCacheEntry.getTimestamp() != null) {
-                        localDate = htsCacheEntry.getTimestamp();
-                    } else {
-                        localDate = htsCache.getLaunchTime();
-                    }
-                    Instant date = localDate.atZone(timezone).toInstant();
+                if (record.getRequestHeader() != null) {
+                    warc.writeRequestRecord(record.getUrl(), responseRecordId, warcDate, record.getRequestHeader());
+                }
 
-                    // use content type if we have it, otherwise guess based on the file extension
-                    String contentType;
-                    if (htsCacheEntry != null && htsCacheEntry.getMime() != null) {
-                        contentType = htsCacheEntry.getMime();
-                    } else {
-                        contentType = mimeTypes.forPath(file);
-                        if (contentType == null) {
-                            contentType = "application/octet-stream";
-                        }
-                    }
-
-                    if (exclusions.contains(relativePath.toString().toLowerCase())) {
-                        log.info(relativePath + " excluded");
-                        return FileVisitResult.CONTINUE;
-                    }
-
-                    log.info("{} -> {}", relativePath, url);
-
-                    // we only allow rotations at the start of each set of records to ensure they're always
-                    // kept together in the same file
-                    if (warc.rotateIfNecessary()) {
-                        warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
-                    }
-
-                    if (htsCacheEntry != null && htsCacheEntry.getResponseHeader() != null) {
-                        warc.writeResponseRecord(url, contentType, digest, responseRecordId, date, contentLength,
-                                htsCacheEntry.getResponseHeader(), file);
-                    } else {
-                        warc.writeResourceRecord(url, contentType, digest, responseRecordId, date, contentLength, file);
-                    }
-
-                    if (htsCacheEntry != null && htsCacheEntry.getRequestHeader() != null) {
-                        warc.writeRequestRecord(url, responseRecordId, date, htsCacheEntry.getRequestHeader());
-                    }
-
-                    if (htsCacheEntry != null && htsCacheEntry.getReferrer() != null) {
-                        warc.writeMetadataRecord(url, responseRecordId, date, htsCacheEntry.getReferrer());
-                    }
-
-                    return FileVisitResult.CONTINUE;
+                if (record.getReferrer() != null) {
+                    warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, record.getReferrer());
                 }
             });
         }
@@ -119,15 +88,15 @@ public class Httrack2Warc {
         log.debug("Finished WARC conversion.");
     }
 
-    private String formatWarcInfo(HtsCache htsCache) {
+    private String formatWarcInfo(HttrackCrawl crawl) {
         StringBuilder info = new StringBuilder(extraWarcInfo);
 
-        if (htsCache.getHttrackVersion() != null) {
-            info.append("software: HTTrack/").append(htsCache.getHttrackVersion()).append(" http://www.httrack.com/\r\n");
+        if (crawl.getHttrackVersion() != null) {
+            info.append("software: HTTrack/").append(crawl.getHttrackVersion()).append(" http://www.httrack.com/\r\n");
         }
 
-        if (htsCache.getHttrackOptions() != null) {
-            info.append("httrackOptions: ").append(htsCache.getHttrackOptions()).append("\r\n");
+        if (crawl.getHttrackOptions() != null) {
+            info.append("httrackOptions: ").append(crawl.getHttrackOptions()).append("\r\n");
         }
 
         return info.toString();
@@ -165,7 +134,7 @@ public class Httrack2Warc {
         return out.toString();
     }
 
-    private String sha1Digest(Path file) throws IOException {
+    private String sha1Digest(InputStream stream) throws IOException {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA1");
@@ -173,12 +142,10 @@ public class Httrack2Warc {
             throw new RuntimeException(e);
         }
         byte[] buffer = new byte[1024 * 1024];
-        try (InputStream is = Files.newInputStream(file)) {
-            for (;;) {
-                int n = is.read(buffer);
-                if (n < 0) break;
-                digest.update(buffer, 0, n);
-            }
+        for (; ; ) {
+            int n = stream.read(buffer);
+            if (n < 0) break;
+            digest.update(buffer, 0, n);
         }
         return base32(digest.digest());
     }

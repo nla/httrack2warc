@@ -27,6 +27,11 @@ public class MimeTypes {
 
     public String forPath(Path path) {
         String filename = path.getFileName().toString();
+        return forFilename(filename);
+    }
+
+
+    public String forFilename(String filename) {
         int i = filename.lastIndexOf(".");
         if (i < 0) {
             return null;

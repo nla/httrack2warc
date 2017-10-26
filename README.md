@@ -21,6 +21,21 @@ Options:
   -C, --compression none|gzip  Type of compression to use (default: gzip).
 ```
 
+## Known issues and limitations
+
+### HTTP headers
+
+By default HTTrack does not record HTTP headers. If the --debug-headers option is specified however the file
+hts-ioinfo.txt will be produced containing a log of the request and response headers.
+
+When headers are available httrack2warc produces WARC records of type request and response. When headers are unavailable
+only WARC resource records are produced.
+
+### IP addresses and DNS records
+
+HTTrack does not record DNS records or the IP addresses of hostnames therefore httrack2warc cannot produce
+WARC-IP-Address or DNS records.
+
 ## Compiling
 
 To be written.

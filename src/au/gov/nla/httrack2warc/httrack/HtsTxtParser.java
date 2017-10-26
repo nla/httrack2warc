@@ -1,9 +1,6 @@
 package au.gov.nla.httrack2warc.httrack;
 
 import au.gov.nla.httrack2warc.ParsingException;
-import org.netpreserve.urlcanon.ByteString;
-import org.netpreserve.urlcanon.Canonicalizer;
-import org.netpreserve.urlcanon.ParsedUrl;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -59,20 +56,7 @@ public class HtsTxtParser implements Closeable {
     }
 
     public String url() {
-        return fixupUrl(matcher.group("url"));
-    }
-
-    private String fixupUrl(String raw) {
-        ParsedUrl url = ParsedUrl.parseUrl(raw);
-        Canonicalizer.WHATWG.canonicalize(url);
-
-        // early versions of httrack wrote the URL without a scheme
-        if (url.getScheme().isEmpty()) {
-            url.setScheme(new ByteString("http"));
-            url.setColonAfterScheme(new ByteString(":"));
-            url.setSlashes(new ByteString("//"));
-        }
-        return url.toString();
+        return HtsUtil.fixupUrl(matcher.group("url"));
     }
 
     public String referrer() {
@@ -80,7 +64,7 @@ public class HtsTxtParser implements Closeable {
         if (raw.isEmpty()) {
             return null;
         }
-        return fixupUrl(raw);
+        return HtsUtil.fixupUrl(raw);
     }
 
     public String mime() {

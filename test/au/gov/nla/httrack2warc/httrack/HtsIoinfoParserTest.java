@@ -13,7 +13,7 @@ public class HtsIoinfoParserTest {
         try (HtsIoinfoParser ioinfo = new HtsIoinfoParser(getClass().getResourceAsStream("test-hts-ioinfo.txt"))) {
             assertTrue(ioinfo.parseRecord());
             assertTrue(ioinfo.request);
-            assertEquals("www.industry.gov.au/acreagereleases/ar_home.html", ioinfo.filename);
+            assertEquals("www.industry.gov.au/acreagereleases/ar_home.html", ioinfo.url);
             assertEquals("GET /acreagereleases/ar_home.html HTTP/1.1\r\n" +
                     "Connection: close\r\n" +
                     "Host: www.industry.gov.au\r\n" +
@@ -25,7 +25,7 @@ public class HtsIoinfoParserTest {
 
             assertTrue(ioinfo.parseRecord());
             assertFalse(ioinfo.request);
-            assertEquals("www.industry.gov.au/acreagereleases/ar_home.html", ioinfo.filename);
+            assertEquals("www.industry.gov.au/acreagereleases/ar_home.html", ioinfo.url);
             assertEquals("HTTP/1.1 200 OK\r\n" +
                     "Connection: close\r\n" +
                     "Content-Length: 6256\r\n" +
@@ -38,7 +38,7 @@ public class HtsIoinfoParserTest {
                     "ETag: \"5af18630baf1c21:8ad\"\r\n\r\n", ioinfo.header);
 
             while (ioinfo.parseRecord()) {
-                assertNotNull(ioinfo.filename);
+                assertNotNull(ioinfo.url);
             }
         }
     }

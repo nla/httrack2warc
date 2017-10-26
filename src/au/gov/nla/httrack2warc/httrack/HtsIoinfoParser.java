@@ -11,7 +11,7 @@ class HtsIoinfoParser implements Closeable {
     private static final Pattern HEADER_RE = Pattern.compile("(?:\\[\\d+\\] )?(request|response) for (.*):");
     private final BufferedReader reader;
     boolean request;
-    String filename;
+    String url;
     String header;
     int code;
 
@@ -33,7 +33,7 @@ class HtsIoinfoParser implements Closeable {
             throw new ParsingException("invalid header line: " + header);
         }
         request = matcher.group(1).equals("request");
-        filename = matcher.group(2);
+        url = HtsUtil.fixupUrl(matcher.group(2));
         code = 0;
 
         String prefix = request ? "<<< " : ">>> ";

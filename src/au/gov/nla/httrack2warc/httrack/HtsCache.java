@@ -12,7 +12,8 @@ import java.util.Map;
 
 public class HtsCache {
 
-    private final Map<String, HtsCacheEntry> entries;
+    private final Map<String, HtsCacheEntry> entriesByPath;
+    private final Map<String, HtsCacheEntry> entriesByUrl;
     private final String httrackVersion;
     private final LocalDateTime launchTime;
     private final String httrackOptions;
@@ -33,7 +34,8 @@ public class HtsCache {
         httrackOptions = doitLog.commandLine;
 
         // parse new.txt
-        entries = new HashMap<>();
+        entriesByPath = new HashMap<>();
+        entriesByUrl = new HashMap<>();
         try (HtsTxtParser parser = new HtsTxtParser(txtStream)) {
             while (parser.readRecord()) {
                 String localfile = parser.localfile();
@@ -52,18 +54,19 @@ public class HtsCache {
                     throw new ParsingException("new.txt localfile (" + localfile + ") outside output dir (" + outputDir + ")");
                 }
                 localfile = localfile.substring(outputDir.length());
-                HtsCacheEntry entry = entries.computeIfAbsent(localfile, HtsCacheEntry::new);
+                HtsCacheEntry entry = entriesByPath.computeIfAbsent(localfile, HtsCacheEntry::new);
                 entry.timestamp = timestamp;
                 entry.mime = parser.mime();
                 entry.url = parser.url();
                 entry.via = parser.referrer();
+                entriesByUrl.put(entry.url, entry);
             }
         }
 
         // parse hts-ioinfo.txt
         try (HtsIoinfoParser ioinfo = new HtsIoinfoParser(ioinfoStream)) {
             while (ioinfo.parseRecord()) {
-                HtsCacheEntry entry = entries.computeIfAbsent(ioinfo.filename, HtsCacheEntry::new);
+                HtsCacheEntry entry = entriesByUrl.computeIfAbsent(ioinfo.url, HtsCacheEntry::new);
                 if (ioinfo.request) {
                     entry.requestHeader = ioinfo.header;
                 } else {
@@ -106,7 +109,7 @@ public class HtsCache {
     }
 
     public HtsCacheEntry get(String path) {
-        return entries.get(path);
+        return entriesByPath.get(path);
     }
 
     public String getHttrackVersion() {

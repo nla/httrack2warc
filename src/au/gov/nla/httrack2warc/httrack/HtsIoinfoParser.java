@@ -33,7 +33,7 @@ class HtsIoinfoParser implements Closeable {
             throw new ParsingException("invalid header line: " + header);
         }
         request = matcher.group(1).equals("request");
-        url = HtsUtil.fixupUrl(matcher.group(2));
+        url = matcher.group(2);
         code = 0;
 
         String prefix = request ? "<<< " : ">>> ";

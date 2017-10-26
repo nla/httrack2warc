@@ -36,9 +36,20 @@ only WARC resource records are produced.
 HTTrack does not record DNS records or the IP addresses of hostnames therefore httrack2warc cannot produce
 WARC-IP-Address or DNS records.
 
-## Compiling
+## Compilation
 
-To be written.
+Install Java JDK 8 (or later) and [Maven](https://maven.apache.org/).  On Fedora Linux:
+
+    dnf install java-1.8.0-openjdk-devel maven
+
+Then compile using Maven from the top-level of this repository:
+
+     cd httrack2warc
+     mvn package
+
+This will produce an executable jar file which you can run like so:
+
+    java -jar target/httrack2warc-*-shaded.jar --help
 
 ## License
 

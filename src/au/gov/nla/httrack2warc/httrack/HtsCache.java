@@ -66,7 +66,8 @@ public class HtsCache {
         // parse hts-ioinfo.txt
         try (HtsIoinfoParser ioinfo = new HtsIoinfoParser(ioinfoStream)) {
             while (ioinfo.parseRecord()) {
-                HtsCacheEntry entry = entriesByUrl.computeIfAbsent(ioinfo.url, HtsCacheEntry::new);
+                String url = HtsUtil.fixupUrl(ioinfo.url);
+                HtsCacheEntry entry = entriesByUrl.computeIfAbsent(url, HtsCacheEntry::new);
                 if (ioinfo.request) {
                     entry.requestHeader = ioinfo.header;
                 } else {

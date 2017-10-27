@@ -78,8 +78,8 @@ public class HttrackCrawl {
         try (HtsTxtParser parser = new HtsTxtParser(Files.newInputStream(dir.resolve("hts-cache/new.txt")));
              Cache cache = openCache()) {
             while (parser.readRecord()) {
-                String localfile = parser.localfile();
-                if (localfile.isEmpty()) {
+                String rawfile = parser.localfile();
+                if (rawfile.isEmpty()) {
                     continue; // skip 404 errors
                 }
 
@@ -91,11 +91,11 @@ public class HttrackCrawl {
                 LocalDateTime timestamp = parser.time().atDate(date);
                 previousTime = time;
 
-                if (!localfile.startsWith(outputDir)) {
-                    throw new ParsingException("new.txt localfile (" + localfile + ") outside output dir (" + outputDir + ")");
+                if (!rawfile.startsWith(outputDir)) {
+                    throw new ParsingException("new.txt localfile (" + rawfile + ") outside output dir (" + outputDir + ")");
                 }
 
-                localfile = localfile.substring(outputDir.length());
+                rawfile = rawfile.substring(outputDir.length());
 
                 String url = parser.url();
 
@@ -104,13 +104,14 @@ public class HttrackCrawl {
                     throw new IOException("no cache entry: " + url);
                 }
 
-                Path file = dir.resolve(percentDecode(localfile));
+                String filename = percentDecode(rawfile);
+                Path file = dir.resolve(filename);
                 if (!file.toAbsolutePath().startsWith(dir.toAbsolutePath())) {
                     throw new IOException(file + " is outside of " + dir);
                 }
 
                 HttrackRecord record = new HttrackRecord(
-                        localfile,
+                        filename,
                         timestamp,
                         HtsUtil.fixupUrl(url),
                         parser.mime(),

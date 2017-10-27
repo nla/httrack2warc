@@ -36,6 +36,27 @@ import java.util.UUID;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
+    private final static Set<String> exclusions = new HashSet<>(Arrays.asList(
+            "backblue.gif",
+            "cookies.txt",
+            "external.html",
+            "fade.gif",
+            "hts-cache/doit.log",
+            "hts-cache/new.dat",
+            "hts-cache/new.lst",
+            "hts-cache/new.ndx",
+            "hts-cache/new.txt",
+            "hts-cache/new.zip",
+            "hts-cache/old.dat",
+            "hts-cache/old.lst",
+            "hts-cache/old.ndx",
+            "hts-cache/old.txt",
+            "hts-cache/old.zip",
+            "hts-err.txt",
+            "hts-ioinfo.txt",
+            "hts-log.txt",
+            "hts-stats.txt",
+            "index.html"));
     private Path outputDirectory = Paths.get("");
     private Path alternateCacheDirectory = null;
     private long warcSizeTarget = 1024 * 1024 * 1024; // 1 GiB
@@ -44,11 +65,6 @@ public class Httrack2Warc {
     private MimeTypes mimeTypes = new MimeTypes();
     private StringBuilder extraWarcInfo = new StringBuilder();
     private Compression compression = Compression.GZIP;
-    
-    private Set<String> exclusions = new HashSet<>(Arrays.asList(
-            "backblue.gif", "hts-log.txt", "fade.gif", "index.html", "hts-ioinfo.txt",
-            "hts-cache/new.txt", "hts-cache/new.zip", "hts-cache/doit.log", "hts-cache/new.lst",
-            "hts-cache/old.txt", "hts-cache/old.zip", "hts-cache/old.lst"));
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -57,6 +73,7 @@ public class Httrack2Warc {
             HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
+            Set<String> processedFiles = new HashSet<>();
 
             crawl.forEach(record -> {
                 UUID responseRecordId = UUID.randomUUID();
@@ -98,6 +115,19 @@ public class Httrack2Warc {
                 if (record.getReferrer() != null) {
                     warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, record.getReferrer());
                 }
+
+                processedFiles.add(record.getFilename());
+            });
+
+            Files.walk(sourceDirectory).forEach(path -> {
+                String file = sourceDirectory.relativize(path).toString();
+                if (processedFiles.contains(file) ||
+                        exclusions.contains(file) ||
+                        Files.isDirectory(path)) {
+                    return;
+                }
+
+                log.warn("Unprocessed extra file: {}", file);
             });
         }
 

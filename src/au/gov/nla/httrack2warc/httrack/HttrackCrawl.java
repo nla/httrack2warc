@@ -110,13 +110,14 @@ public class HttrackCrawl {
                     throw new IOException(file + " is outside of " + dir);
                 }
 
+                String fixedUrl = HtsUtil.fixupUrl(url);
                 HttrackRecord record = new HttrackRecord(
                         filename,
                         timestamp,
-                        HtsUtil.fixupUrl(url),
+                        fixedUrl,
                         parser.mime(),
-                        requestHeaders.get(url),
-                        responseHeaders.get(url),
+                        requestHeaders.get(fixedUrl),
+                        responseHeaders.get(fixedUrl),
                         parser.referrer(),
                         file,
                         cacheEntry);

@@ -60,6 +60,7 @@ public class Httrack2WarcTest {
                 } else if (type.equals("warcinfo")) {
                     String payload = slurp(warcRecord.getPayloadContent());
                     assertEquals("software: HTTrack/3.49-2 http://www.httrack.com/\r\n" +
+                            "software: httrack2warc https://github.com/nla/httrack2warc\r\n" +
                             "httrackOptions: -%H http://test.example.org/\r\n", payload);
                 }
             }

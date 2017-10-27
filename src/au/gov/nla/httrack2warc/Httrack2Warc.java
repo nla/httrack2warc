@@ -23,16 +23,14 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
@@ -149,11 +147,30 @@ public class Httrack2Warc {
             info.append("software: HTTrack/").append(crawl.getHttrackVersion()).append(" http://www.httrack.com/\r\n");
         }
 
+        String selfVersion = getSelfVersion();
+        if (selfVersion != null) {
+            info.append("software: httrack2warc/").append(selfVersion).append(" https://github.com/nla/httrack2warc\r\n");
+        } else {
+            info.append("software: httrack2warc https://github.com/nla/httrack2warc\r\n");
+        }
+
         if (crawl.getHttrackOptions() != null) {
             info.append("httrackOptions: ").append(crawl.getHttrackOptions()).append("\r\n");
         }
 
         return info.toString();
+    }
+
+    static String getSelfVersion() {
+        URL resource = Httrack2Warc.class.getResource("/META-INF/maven/au.gov.nla/httrack2warc/pom.properties");
+        if (resource == null) return null;
+        try (InputStream stream = resource.openStream()) {
+            Properties properties = new Properties();
+            properties.load(stream);
+            return properties.getProperty("version");
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     private static String encodePath(Path path) throws UnsupportedEncodingException {

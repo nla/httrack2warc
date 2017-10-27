@@ -39,10 +39,11 @@ class WarcWriter implements Closeable {
     private static final long warcRotationSize = 1048576000;
     private final RotatingFile warcRotor;
     private final CdxWriter cdxWriter;
-    private final Compression compression = Compression.GZIP;
+    private final Compression compression;
 
-    public WarcWriter(String warcFilePattern, CdxWriter cdxWriter) throws IOException {
+    WarcWriter(String warcFilePattern, Compression compression, CdxWriter cdxWriter) throws IOException {
         this.warcRotor = new RotatingFile(warcFilePattern, warcRotationSize);
+        this.compression = compression;
         this.cdxWriter = cdxWriter;
     }
 

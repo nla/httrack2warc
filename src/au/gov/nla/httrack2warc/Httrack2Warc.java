@@ -69,7 +69,7 @@ public class Httrack2Warc {
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
-        try (WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), null)) {
+        try (WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, null)) {
             HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();

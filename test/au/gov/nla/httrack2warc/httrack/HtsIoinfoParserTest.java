@@ -59,4 +59,40 @@ public class HtsIoinfoParserTest {
         }
     }
 
+    @Test
+    public void test301() throws IOException {
+        try (HtsIoinfoParser ioinfo = new HtsIoinfoParser(getClass().getResourceAsStream("test-hts-ioinfo-3.01.txt"))) {
+            assertTrue(ioinfo.parseRecord());
+            assertTrue(ioinfo.request);
+            assertEquals("www.artistsfootsteps.com/", ioinfo.url);
+            assertEquals("GET http://www.artistsfootsteps.com/ HTTP/1.1\r\n" +
+                    "Connection: close\r\n" +
+                    "Host: www.artistsfootsteps.com\r\n" +
+                    "User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)\r\n" +
+                    "Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*\r\n" +
+                    "Accept-Language: en, *\r\n" +
+                    "Accept-Charset: iso-8859-1, *\r\n" +
+                    "Accept-Encoding: identity\r\n" +
+                    "\r\n", ioinfo.header);
+
+            assertTrue(ioinfo.parseRecord());
+            assertFalse(ioinfo.request);
+            assertEquals("www.artistsfootsteps.com/", ioinfo.url);
+            assertEquals("HTTP/1.0 200 OK\r\n" +
+                    "Date: Fri, 01 Jun 2001 00:15:52 GMT\r\n" +
+                    "Age: 450072\r\n" +
+                    "Server: Microsoft-IIS/4.0\r\n" +
+                    "Content-Location: http://www.artistsfootsteps.com/index.html\r\n" +
+                    "Content-Type: text/html\r\n" +
+                    "Accept-Ranges: bytes\r\n" +
+                    "Last-Modified: Wed, 07 Mar 2001 01:34:34 GMT\r\n" +
+                    "Content-Length: 990\r\n" +
+                    "Etag: \"0316fc3a6a6c01:44dbc\"\r\n" +
+                    "Via: 1.1 proxy.cache.telstra.net (NetCache 4.1R6)\r\n" +
+                    "\r\n", ioinfo.header);
+            while (ioinfo.parseRecord()) {
+                assertNotNull(ioinfo.url);
+            }
+        }
+    }
 }

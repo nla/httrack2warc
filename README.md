@@ -1,15 +1,16 @@
 # httrack2warc
 Converts HTTrack crawls to WARC files
 
-Status: Not fully functional or tested yet.
+Status: First release available, only limited testing.
 
 ## Usage
 
-```
-Convert HTTrack web crawls to WARC files
+Download the [latest release jar](https://github.com/nla/httrack2warc/releases)
+and run it under Java 8 or later.
 
+```
 Usage:
-  httrack2warc [OPTIONS...] -o outdir crawldir
+  java -jar httrack2warc-0.1.0-shaded.jar [OPTIONS...] -o outdir crawldir
 
 Options:
   -h, --help                   Show this screen.

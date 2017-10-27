@@ -22,7 +22,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class Pandora2WarcTest {
     @Test

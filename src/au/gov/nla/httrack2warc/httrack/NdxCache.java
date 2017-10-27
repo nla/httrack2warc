@@ -27,20 +27,18 @@ import java.util.Map;
 
 class NdxCache implements Cache {
 
-    private final String version;
-    private final String lastModified;
     private final Map<String,Long> entries = new HashMap<>();
     private final Path datFile;
 
     NdxCache(Path dir) throws IOException {
         datFile = dir.resolve("hts-cache/new.dat");
         try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(dir.resolve("hts-cache/new.ndx"))))) {
-            version = readString(stream);
+            String version = readString(stream);
             if (!version.startsWith("CACHE-1.")) {
                 throw new IOException("Unsupported cache version: " + version);
             }
 
-            lastModified = readString(stream);
+            String lastModified = readString(stream);
 
             for (;;) {
                 String hostAndPath = readString(stream);

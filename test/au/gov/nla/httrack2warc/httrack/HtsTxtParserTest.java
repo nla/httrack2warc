@@ -53,6 +53,7 @@ public class HtsTxtParserTest {
 
             while (parser.readRecord()) {
                 // just try to touch everything
+                assertNotNull(parser.url());
             }
         }
     }

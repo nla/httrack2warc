@@ -18,7 +18,6 @@ package au.gov.nla.httrack2warc.httrack;
 
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 

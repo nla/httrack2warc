@@ -55,7 +55,7 @@ public class CdxWriter implements Closeable {
         pb.environment().put("LANG", "C");
         pb.redirectOutput(destination.toFile());
         pb.redirectError(ProcessBuilder.Redirect.INHERIT);
-        int exitValue = 0;
+        int exitValue;
         try {
             exitValue = pb.start().waitFor();
         } catch (InterruptedException e) {

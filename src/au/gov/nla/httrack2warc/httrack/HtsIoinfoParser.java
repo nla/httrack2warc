@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class HtsIoinfoParser implements Closeable {
-    private static final Pattern HEADER_RE = Pattern.compile("(?:\\[\\d+\\] )?(request|response) for (.*):");
+    private static final Pattern HEADER_RE = Pattern.compile("(?:\\[\\d+] )?(request|response) for (.*):");
     private final BufferedReader reader;
     boolean request;
     String url;
@@ -60,7 +60,7 @@ class HtsIoinfoParser implements Closeable {
                 throw new EOFException("missing trailer");
             } else if (line.isEmpty()) {
                 String trailer = reader.readLine();
-                if (trailer == null && !trailer.isEmpty()) {
+                if (trailer == null || !trailer.isEmpty()) {
                     throw new EOFException("expected second trailer line but got: " + trailer);
                 }
                 break;

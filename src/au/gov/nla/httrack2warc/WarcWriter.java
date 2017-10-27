@@ -81,8 +81,7 @@ class WarcWriter implements Closeable {
         writeRecord(header, gzos -> gzos.write(body));
     }
 
-    public void writeMetadataRecord(String url, UUID responseUuid, Instant date, String via) throws IOException {
-        String metadata = "via: " + via + "\r\n";
+    public void writeMetadataRecord(String url, UUID responseUuid, Instant date, String metadata) throws IOException {
         byte[] body = metadata.getBytes(ISO_8859_1);
         String header = "WARC/1.0\r\n" +
                 "WARC-Type: metadata\r\n" +

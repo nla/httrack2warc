@@ -112,8 +112,16 @@ public class Httrack2Warc {
                     warc.writeRequestRecord(record.getUrl(), responseRecordId, warcDate, record.getRequestHeader());
                 }
 
+                // build metadata record
+                StringBuilder metadata = new StringBuilder();
                 if (record.getReferrer() != null) {
-                    warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, record.getReferrer());
+                    metadata.append("via: ").append(record.getReferrer()).append("\r\n");
+                }
+                if (record.getFilename() != null) {
+                    metadata.append("httrackFile: ").append(record.getFilename()).append("\r\n");
+                }
+                if (metadata.length() > 0) {
+                    warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, metadata.toString());
                 }
 
                 processedFiles.add(record.getFilename());

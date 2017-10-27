@@ -52,7 +52,7 @@ public class HtsTxtParserTest {
             assertEquals("/pandas/working/13982/20030403/www.industry.gov.au/acreagereleases/ar_home.html", parser.localfile());
 
             while (parser.readRecord()) {
-                assertTrue(parser.url().startsWith("http://"));
+                // just try to touch everything
             }
         }
     }

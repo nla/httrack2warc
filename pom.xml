@@ -65,5 +65,11 @@
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.21</version>
         </dependency>
+        <dependency>
+            <groupId>org.jwat</groupId>
+            <artifactId>jwat-warc</artifactId>
+            <version>1.1.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -16,6 +16,7 @@
 
 package au.gov.nla.httrack2warc.httrack;
 
+import au.gov.nla.httrack2warc.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -31,6 +32,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.assertEquals;
+import java.io.InputStream;
 
 public class HttrackRecordTest {
 
@@ -41,16 +43,7 @@ public class HttrackRecordTest {
     @BeforeClass
     public static void setUp() throws IOException {
         crawlPath = temp.newFolder().toPath();
-        try (ZipInputStream zip = new ZipInputStream(HttrackRecordTest.class.getResourceAsStream("testcrawl-3.49-2.zip"))) {
-            for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
-                Path path = crawlPath.resolve(entry.getName());
-                if (entry.isDirectory()) {
-                    Files.createDirectory(path);
-                } else {
-                    Files.copy(zip, path);
-                }
-            }
-        }
+        TestUtils.unzip(HttrackRecordTest.class.getResourceAsStream("testcrawl-3.49-2.zip"), crawlPath);
     }
 
     @Test

@@ -46,7 +46,7 @@ public class HtsTxtParserTest {
         try (HtsTxtParser parser = new HtsTxtParser(new BufferedReader(new InputStreamReader(getClass().getResourceAsStream("test-hts-new2.txt"))))) {
             assertTrue(parser.readRecord());
             assertEquals(LocalTime.of(1, 0, 14), parser.time());
-            assertEquals("http://www.industry.gov.au/acreagereleases/ar_home.html", parser.url());
+            assertEquals("www.industry.gov.au/acreagereleases/ar_home.html", parser.url());
             assertNull(parser.referrer());
             assertEquals("text/html", parser.mime());
             assertEquals("/pandas/working/13982/20030403/www.industry.gov.au/acreagereleases/ar_home.html", parser.localfile());

@@ -18,17 +18,27 @@ package au.gov.nla.httrack2warc.httrack;
 
 import au.gov.nla.httrack2warc.ParsingException;
 
+import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public class HttrackCrawl {
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+
+public class HttrackCrawl implements Closeable {
+    private static Pattern DEBUG_RECORD_RE = Pattern.compile("(\\d\\d:\\d\\d:\\d\\d)\tDebug: \tRecord: (.*) -> (.*)");
+    private static Pattern WARN_MOVED_RE = Pattern.compile("(\\d\\d:\\d\\d:\\d\\d)\tWarning: \tFile has moved from (.*) to (.*)");
+
     private final Path dir;
 
     private String httrackVersion;
@@ -37,6 +47,10 @@ public class HttrackCrawl {
     private String outputDir;
     private final Map<String,String> requestHeaders = new HashMap<>();
     private final Map<String,String> responseHeaders = new HashMap<>();
+    private static final String[] LOG_FILE_NAMES = new String[]{"hts-log.txt", "logs/gen"};
+    private LocalDate date;
+    private LocalTime previousTime;
+    private final Cache cache;
 
     public HttrackCrawl(Path dir) throws IOException {
         this.dir = dir;
@@ -44,6 +58,8 @@ public class HttrackCrawl {
         parseHtsLog();
         parseDoitLog();
         parseIoinfo();
+
+        cache = openCache();
     }
 
     private void parseIoinfo() throws IOException {
@@ -57,9 +73,15 @@ public class HttrackCrawl {
     }
 
     private void parseHtsLog() throws IOException {
-        try (HtsLogParser htsLog = new HtsLogParser(Files.newInputStream(dir.resolve("hts-log.txt")))) {
-            httrackVersion = htsLog.version;
+        for (String file: LOG_FILE_NAMES) {
+            try (HtsLogParser htsLog = new HtsLogParser(Files.newInputStream(dir.resolve(file)))) {
+                httrackVersion = htsLog.version;
+                return;
+            } catch (NoSuchFileException e) {
+                // try next
+            }
         }
+
     }
 
     private void parseDoitLog() throws IOException {
@@ -72,58 +94,100 @@ public class HttrackCrawl {
     }
 
     public void forEach(RecordConsumer action) throws IOException {
-        LocalTime previousTime = null;
-        LocalDate date = launchTime.toLocalDate();
+        if (Files.exists(dir.resolve("hts-cache/new.txt"))) {
+            forEachByTxt(action);
+        } else if (Files.exists(dir.resolve("logs/debug"))) {
+            forEachByDebugLogs(action);
+        } else {
+            throw new IOException("Both hts-cache/new.txt and logs/debug are missing. I can't handle this crawl.");
+        }
+    }
 
-        try (HtsTxtParser parser = new HtsTxtParser(Files.newInputStream(dir.resolve("hts-cache/new.txt")));
-             Cache cache = openCache()) {
+    private void forEachByTxt(RecordConsumer action) throws IOException {
+        resetDateHeuristic();
+
+        try (HtsTxtParser parser = new HtsTxtParser(Files.newInputStream(dir.resolve("hts-cache/new.txt")))) {
             while (parser.readRecord()) {
                 String rawfile = parser.localfile();
                 if (rawfile.isEmpty()) {
                     continue; // skip 404 errors
                 }
 
-                LocalTime time = parser.time();
-                if (previousTime != null && time.isBefore(previousTime)) {
-                    // if we go backwards in time, assume we've wrapped around to the next day
-                    date = date.plusDays(1);
-                }
-                LocalDateTime timestamp = parser.time().atDate(date);
-                previousTime = time;
-
-                if (!rawfile.startsWith(outputDir)) {
-                    throw new ParsingException("new.txt localfile (" + rawfile + ") outside output dir (" + outputDir + ")");
-                }
-
-                rawfile = rawfile.substring(outputDir.length());
-
-                String url = parser.url();
-
-                CacheEntry cacheEntry = cache.getEntry(url);
-                if (cacheEntry == null) {
-                    throw new IOException("no cache entry: " + url);
-                }
-
-                String filename = percentDecode(rawfile);
-                Path file = dir.resolve(filename);
-                if (!file.toAbsolutePath().startsWith(dir.toAbsolutePath())) {
-                    throw new IOException(file + " is outside of " + dir);
-                }
-
-                String fixedUrl = HtsUtil.fixupUrl(url);
-                HttrackRecord record = new HttrackRecord(
-                        filename,
-                        timestamp,
-                        fixedUrl,
-                        parser.mime(),
-                        requestHeaders.get(fixedUrl),
-                        responseHeaders.get(fixedUrl),
-                        parser.referrer(),
-                        file,
-                        cacheEntry);
+                HttrackRecord record = buildRecord(parser.time(), parser.url(), rawfile, parser.mime(), parser.referrer());
                 action.accept(record);
             }
         }
+
+        // TODO: redirects
+    }
+
+    private void resetDateHeuristic() {
+        previousTime = null;
+        date = launchTime.toLocalDate();
+    }
+
+    private HttrackRecord buildRecord(LocalTime time, String url, String rawfile, String mime,
+                                      String referrer) throws IOException {
+        if (previousTime != null && time.isBefore(previousTime)) {
+            // if we go backwards in time, assume we've wrapped around to the next day
+            date = date.plusDays(1);
+        }
+        LocalDateTime timestamp = time.atDate(date);
+        previousTime = time;
+
+        if (!rawfile.startsWith(outputDir)) {
+            throw new ParsingException("new.txt localfile (" + rawfile + ") outside output dir (" + outputDir + ")");
+        }
+
+        rawfile = rawfile.substring(outputDir.length());
+
+        CacheEntry cacheEntry = cache.getEntry(url);
+        if (cacheEntry == null) {
+            throw new IOException("no cache entry: " + url);
+        }
+
+        String filename = percentDecode(rawfile);
+        Path file = dir.resolve(filename);
+        if (!file.toAbsolutePath().startsWith(dir.toAbsolutePath())) {
+            throw new IOException(file + " is outside of " + dir);
+        }
+
+        String fixedUrl = HtsUtil.fixupUrl(url);
+        return new HttrackRecord(
+                filename,
+                timestamp,
+                fixedUrl,
+                mime,
+                requestHeaders.get(fixedUrl),
+                responseHeaders.get(fixedUrl),
+                referrer,
+                file,
+                cacheEntry);
+    }
+
+    private void forEachByDebugLogs(RecordConsumer action) throws IOException {
+        resetDateHeuristic();
+
+        try (BufferedReader reader = Files.newBufferedReader(dir.resolve("logs/debug"), ISO_8859_1)) {
+            for (;;) {
+                String line = reader.readLine();
+                if (line == null) break;
+
+                Matcher m = DEBUG_RECORD_RE.matcher(line);
+                if (!m.matches()) continue;
+
+                LocalTime time = LocalTime.parse(m.group(1));
+                String url = m.group(2);
+                String file = m.group(3);
+
+                HttrackRecord record = buildRecord(time, url, file, null, null);
+                action.accept(record);
+            }
+        }
+
+        resetDateHeuristic();
+
+        // TODO: redirects
     }
 
     private String percentDecode(String s) {
@@ -160,6 +224,11 @@ public class HttrackCrawl {
 
     public LocalDateTime getLaunchTime() {
         return launchTime;
+    }
+
+    @Override
+    public void close() throws IOException {
+        cache.close();
     }
 
     public interface RecordConsumer {

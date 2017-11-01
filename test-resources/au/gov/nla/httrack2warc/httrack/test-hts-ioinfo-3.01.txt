@@ -1,0 +1,74 @@
+Out:
+GET http://www.artistsfootsteps.com/ HTTP/1.1
+Connection: close
+Host: www.artistsfootsteps.com
+User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)
+Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*
+Accept-Language: en, *
+Accept-Charset: iso-8859-1, *
+Accept-Encoding: identity
+
+
+
+response for www.artistsfootsteps.com/:
+(Buffer) Status-Code=200
+(buffer)>Date: Fri, 01 Jun 2001 00:15:52 GMT
+(buffer)>Age: 450072
+(buffer)>Server: Microsoft-IIS/4.0
+(buffer)>Content-Location: http://www.artistsfootsteps.com/index.html
+(buffer)>Content-Type: text/html
+(buffer)>Accept-Ranges: bytes
+(buffer)>Last-Modified: Wed, 07 Mar 2001 01:34:34 GMT
+(buffer)>Content-Length: 990
+(buffer)>Etag: "0316fc3a6a6c01:44dbc"
+(buffer)>Via: 1.1 proxy.cache.telstra.net (NetCache 4.1R6)
+(buffer)>
+Out:
+GET http://www.artistsfootsteps.com/nav.htm HTTP/1.1
+Referer: http://www.artistsfootsteps.com/
+Connection: close
+Host: www.artistsfootsteps.com
+User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)
+Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*
+Accept-Language: en, *
+Accept-Charset: iso-8859-1, *
+Accept-Encoding: identity
+
+
+Out:
+GET http://www.artistsfootsteps.com/body.html HTTP/1.1
+Referer: http://www.artistsfootsteps.com/
+Connection: close
+Host: www.artistsfootsteps.com
+User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)
+Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*
+Accept-Language: en, *
+Accept-Charset: iso-8859-1, *
+Accept-Encoding: identity
+
+
+
+response for www.artistsfootsteps.com/nav.htm:
+(Buffer) Status-Code=200
+(buffer)>Date: Fri, 01 Jun 2001 00:15:52 GMT
+(buffer)>Age: 450073
+(buffer)>Server: Microsoft-IIS/4.0
+(buffer)>Content-Type: text/html
+(buffer)>Accept-Ranges: bytes
+(buffer)>Last-Modified: Wed, 07 Mar 2001 01:34:40 GMT
+(buffer)>Content-Length: 4393
+(buffer)>Etag: "0b82c7a6a6c01:44dbc"
+(buffer)>Via: 1.1 proxy.cache.telstra.net (NetCache 4.1R6)
+(buffer)>
+Out:
+GET http://www.artistsfootsteps.com/images/brush.gif HTTP/1.1
+Referer: http://www.artistsfootsteps.com/nav.htm
+Connection: close
+Host: www.artistsfootsteps.com
+User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)
+Accept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, */*
+Accept-Language: en, *
+Accept-Charset: iso-8859-1, *
+Accept-Encoding: identity
+
+

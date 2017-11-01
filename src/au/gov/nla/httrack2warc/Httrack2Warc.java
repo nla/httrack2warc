@@ -37,6 +37,7 @@ public class Httrack2Warc {
     private final static Set<String> exclusions = new HashSet<>(Arrays.asList(
             "backblue.gif",
             "cookies.txt",
+            "external.gif",
             "external.html",
             "fade.gif",
             "hts-cache/doit.log",
@@ -54,7 +55,12 @@ public class Httrack2Warc {
             "hts-ioinfo.txt",
             "hts-log.txt",
             "hts-stats.txt",
-            "index.html"));
+            "index.html",
+            "logs/info",
+            "logs/err",
+            "logs/gen",
+            "logs/debug",
+            "logs/warn"));
     private Path outputDirectory = Paths.get("");
     private Path alternateCacheDirectory = null;
     private long warcSizeTarget = 1024 * 1024 * 1024; // 1 GiB
@@ -67,8 +73,8 @@ public class Httrack2Warc {
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
-        try (WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, null)) {
-            HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
+        try (HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
+             WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, null)) {
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
             Set<String> processedFiles = new HashSet<>();

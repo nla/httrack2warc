@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 class HtsIoinfoParser implements Closeable {
     private static final Pattern HEADER_RE = Pattern.compile("(?:\\[\\d+] )?(request|response) for (.*):");
+    private static final Pattern REQUEST_RE = Pattern.compile("(?:[A-Z]+) http://(.*) HTTP/1.[01]");
     private final BufferedReader reader;
     boolean request;
     String url;
@@ -40,32 +41,53 @@ class HtsIoinfoParser implements Closeable {
     }
 
     public boolean parseRecord() throws IOException {
-        String header = reader.readLine();
-        if (header == null) {
-            return false;
+        String header;
+
+        do {
+            header = reader.readLine();
+            if (header == null) return false;
+        } while (header.isEmpty());
+
+        StringBuilder buffer = new StringBuilder();
+        String prefix;
+
+        if (header.equals("Out:")) { // HTTrack 3.01 requests
+            String requestLine = reader.readLine();
+            Matcher matcher = REQUEST_RE.matcher(requestLine);
+            if (!matcher.matches()) {
+                throw new ParsingException("invalid request line: " + requestLine);
+            }
+
+            buffer.append(requestLine).append("\r\n");
+            request = true;
+            url = matcher.group(1);
+            prefix = "";
+        } else { // later versions
+            Matcher matcher = HEADER_RE.matcher(header);
+            if (!matcher.matches()) {
+                throw new ParsingException("invalid header line: " + header);
+            }
+            request = matcher.group(1).equals("request");
+            url = matcher.group(2);
+            prefix = request ? "<<< " : ">>> ";
         }
-        Matcher matcher = HEADER_RE.matcher(header);
-        if (!matcher.matches()) {
-            throw new ParsingException("invalid header line: " + header);
-        }
-        request = matcher.group(1).equals("request");
-        url = matcher.group(2);
+
         code = 0;
 
-        String prefix = request ? "<<< " : ">>> ";
-        StringBuilder buffer = new StringBuilder();
         while (true) {
             String line = reader.readLine();
             if (line == null) {
                 throw new EOFException("missing trailer");
             } else if (line.isEmpty()) {
-                String trailer = reader.readLine();
-                if (trailer == null || !trailer.isEmpty()) {
-                    throw new EOFException("expected second trailer line but got: " + trailer);
-                }
                 break;
+            } else if (line.startsWith("(Buffer) Status-Code=")) {
+                code = Integer.parseInt(line.substring("(Buffer) Status-Code=".length()));
+                prefix = "(buffer)>";
+                buffer.append("HTTP/1.0 ").append(code).append(" OK\r\n");
             } else if (line.startsWith(prefix)) {
-                buffer.append(line.substring(prefix.length()));
+                line = line.substring(prefix.length());
+                if (line.isEmpty()) break;
+                buffer.append(line);
                 buffer.append("\r\n");
             } else if (!request && line.startsWith("code=")) {
                 code = Integer.parseInt(line.substring("code=".length()));

@@ -31,6 +31,7 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
@@ -104,9 +105,11 @@ public class Httrack2Warc {
                 Instant warcDate = record.getTimestamp().atZone(timezone).toInstant();
 
                 try (InputStream stream = record.openStream()) {
-                    if (record.getResponseHeader() != null) {
+                    String responseHeader = record.getResponseHeader();
+                    if (responseHeader != null) {
+                        responseHeader = removeTransferEncodingHeader(responseHeader);
                         warc.writeResponseRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength,
-                                record.getResponseHeader(), stream);
+                                responseHeader, stream);
                     } else {
                         warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, stream);
                     }
@@ -144,6 +147,17 @@ public class Httrack2Warc {
         }
 
         log.debug("Finished WARC conversion.");
+    }
+
+    private static Pattern TRANSFER_ENCODING_RE = Pattern.compile("^\\s*Transfer-Encoding\\s*:.*\r\n", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+
+    /**
+     * Remove the Transfer-Encoding response header. We do this as we don't have the original encoded bytes and
+     * tools attempting to read the WARC file we generate will expect to decode the payload according to the
+     * Transfer-Encoding.
+     */
+    static String removeTransferEncodingHeader(String header) {
+        return TRANSFER_ENCODING_RE.matcher(header).replaceAll("");
     }
 
     private String formatWarcInfo(HttrackCrawl crawl) {

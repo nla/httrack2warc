@@ -85,6 +85,20 @@ public class Httrack2WarcTest {
                 summary.toString());
     }
 
+    @Test
+    public void removeTransferEncodingHeader() {
+        String header = "HTTP/1.1 200 OK\r\n" +
+                "Content-Length: 400\r\n" +
+                "Transfer-Encoding: gzip\r\n" +
+                "Content-Type: image/pants\r\n" +
+                "TRANSFER-encoding: chunked, pizza\r\n\r\n";
+        assertEquals("HTTP/1.1 200 OK\r\n" +
+                        "Content-Length: 400\r\n" +
+                        "Content-Type: image/pants\r\n" +
+                        "\r\n",
+                Httrack2Warc.removeTransferEncodingHeader(header));
+    }
+
     private static String slurp(InputStream stream) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];

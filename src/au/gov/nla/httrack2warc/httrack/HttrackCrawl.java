@@ -69,6 +69,8 @@ public class HttrackCrawl implements Closeable {
                 Map<String, String> map = ioinfo.request ? requestHeaders : responseHeaders;
                 map.put(url, ioinfo.header);
             }
+        } catch (NoSuchFileException e) {
+            // that's ok
         }
     }
 

@@ -19,6 +19,7 @@ package au.gov.nla.httrack2warc.httrack;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -36,14 +37,15 @@ class ZipCache implements Cache {
 
     @Override
     public CacheEntry getEntry(String url) {
-        return new Entry(zipFile.getEntry(url));
+        ZipEntry entry = zipFile.getEntry(url);
+        return entry == null ? null : new Entry(entry);
     }
 
     private class Entry implements CacheEntry {
         private final ZipEntry entry;
 
         Entry(ZipEntry entry) {
-            this.entry = entry;
+            this.entry = Objects.requireNonNull(entry);
         }
 
         @Override

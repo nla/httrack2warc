@@ -70,12 +70,14 @@ public class Httrack2Warc {
     private MimeTypes mimeTypes = new MimeTypes();
     private StringBuilder extraWarcInfo = new StringBuilder();
     private Compression compression = Compression.GZIP;
+    private String cdxName = null;
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
+        CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));
         try (HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
-             WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, null)) {
+             WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, cdxWriter)) {
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
             Set<String> processedFiles = new HashSet<>();
@@ -144,6 +146,12 @@ public class Httrack2Warc {
 
                 log.warn("Unprocessed extra file: {}", file);
             });
+
+            cdxWriter.finish();
+        } finally {
+            if (cdxWriter != null) {
+                cdxWriter.close();
+            }
         }
 
         log.debug("Finished WARC conversion.");
@@ -291,5 +299,9 @@ public class Httrack2Warc {
 
     public void setCompression(Compression compression) {
         this.compression = compression;
+    }
+
+    public void setCdxName(String cdxName) {
+        this.cdxName = cdxName;
     }
 }

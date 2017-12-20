@@ -16,6 +16,9 @@
 
 package au.gov.nla.httrack2warc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
@@ -30,6 +33,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.ZoneOffset.UTC;
 
 public class CdxWriter implements Closeable {
+    private static final Logger log = LoggerFactory.getLogger(CdxWriter.class);
     private static final DateTimeFormatter ARC_DATE = DateTimeFormatter.ofPattern("yyyyMMddHHmmss", Locale.US).withZone(UTC);
 
     private final BufferedWriter writer;
@@ -82,7 +86,7 @@ public class CdxWriter implements Closeable {
             cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " 200 " +
                     digest + " - " + recordPosition.start + " " + filename + "\n";
         }
-        System.out.print(cdxLine);
+        log.debug(cdxLine);
         writer.write(cdxLine);
     }
 }

@@ -34,7 +34,8 @@ public class Main {
             "  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).\n" +
             "  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: " + ZoneId.systemDefault() + ").\n" +
             "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n" +
-            "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n";
+            "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
+            "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n";
 
     public static void main(String[] args) throws IOException {
         Path crawldir = null;
@@ -75,6 +76,10 @@ public class Main {
                 case "-C":
                 case "--compression":
                     httrack2Warc.setCompression(Compression.valueOf(args[++i].toUpperCase()));
+                    break;
+
+                case "--cdx":
+                    httrack2Warc.setCdxName(args[++i]);
                     break;
 
                 default:

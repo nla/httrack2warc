@@ -147,7 +147,9 @@ public class Httrack2Warc {
                 log.warn("Unprocessed extra file: {}", file);
             });
 
-            cdxWriter.finish();
+            if (cdxWriter != null) {
+                cdxWriter.finish();
+            }
         } finally {
             if (cdxWriter != null) {
                 cdxWriter.close();

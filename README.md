@@ -4,6 +4,11 @@ Converts HTTrack crawls to WARC files.
 
 Status: Working on many crawls but needs more testing on corner cases. We're not using it in production yet.
 
+This tool works by reading the HTTrack cache directory (hts-cache) and any available log files to reconstruct an
+approximation of the original requests and responses. This process is not perfect as not all the necessary information
+is always available. Some of the information that is available is only present in debug log messages that were never
+intended for machine consumption. Please see the list of known issues and limitations below.
+
 ## Usage
 
 Download the [latest release jar](https://github.com/nla/httrack2warc/releases)

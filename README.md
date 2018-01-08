@@ -22,6 +22,32 @@ Options:
   -C, --compression none|gzip  Type of compression to use (default: gzip).
 ```
 
+### Example
+
+Conduct a crawl using HTTrack:
+
+    $ httrack -O /tmp/crawl http://www.example.org/
+    Mirror launched on Mon, 08 Jan 2018 13:50:40 by HTTrack Website Copier/3.49-2 [XR&CO'2014]
+    mirroring http://www.example.org/ with the wizard help..
+    Done.www.example.org/ (1270 bytes) - OK
+    Thanks for using HTTrack!
+
+Run httrack2warc over the output to produce WARC files:
+
+    $ java -jar httrack2warc-shaded-0.2.0.jar /tmp/crawl
+    Httrack2Warc - www.example.org/index.html -> http://www.example.org/
+
+Replay the ingested WARC files using a replay tool like [pywb](https://github.com/ikreymer/pywb):
+
+    $ pip install --user pywb
+    $ PATH="$PATH:$HOME/.local/bin"
+    $ wb-manager init test
+    $ wb-manager add test crawl-*.warc.gz
+    [INFO]: Copied crawl-0.warc.gz to collections/test/archive
+    $ wayback
+    [INFO]: Starting pywb Wayback Web Archive Replay on port 8080
+    # Open in browser: http://localhost:8080/test/*/example.org/
+
 ## Known issues and limitations
 
 ### HTTP headers

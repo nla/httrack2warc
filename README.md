@@ -10,7 +10,7 @@ and run it under Java 8 or later.
 
 ```
 Usage:
-  java -jar httrack2warc-0.1.0-shaded.jar [OPTIONS...] -o outdir crawldir
+  java -jar httrack2warc-0.2.0-shaded.jar [OPTIONS...] -o outdir crawldir
 
 Options:
   -h, --help                   Show this screen.

@@ -50,6 +50,11 @@ Replay the ingested WARC files using a replay tool like [pywb](https://github.co
 
 ## Known issues and limitations
 
+### Redirects
+
+Generation of HTTP redirect (30x) records is not yet implemented.  It should be possible to derive these from the log
+files.
+
 ### HTTP headers
 
 By default HTTrack does not record HTTP headers. If the --debug-headers option is specified however the file

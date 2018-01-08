@@ -25,6 +25,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Parser for the .ndx and .dat file cache format used in HTTrack versions older than 3.31.
+ */
 class NdxCache implements Cache {
 
     private final Map<String,Long> entries = new HashMap<>();

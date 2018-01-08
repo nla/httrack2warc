@@ -23,6 +23,10 @@ import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+ * Parser for the zip-based cache format used in HTTrack 3.31 and earlier.
+ * The format is described at https://www.httrack.com/html/cache.html
+ */
 class ZipCache implements Cache {
     private final ZipFile zipFile;
 

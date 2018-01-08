@@ -58,6 +58,8 @@ hts-ioinfo.txt will be produced containing a log of the request and response hea
 When headers are available httrack2warc produces WARC records of type request and response. When headers are unavailable
 only WARC resource records are produced.
 
+The `Transfer-Encoding` header is always stripped as the encoded bytes of the message are not recorded by HTTrack.
+
 ### IP addresses and DNS records
 
 HTTrack does not record DNS records or the IP addresses of hostnames therefore httrack2warc cannot produce

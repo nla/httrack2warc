@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e -u
+
+BASEDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+
+if [ ! -f "$BASEDIR/target/classpath" ]; then
+    echo Compiling...
+    (cd $BASEDIR && mvn compile dependency:build-classpath -q -Dmdep.outputFile=target/classpath)
+fi
+
+CLASSPATH="$(cat "$BASEDIR/target/classpath"):$BASEDIR/target/classes"
+export CLASSPATH
+exec java au.gov.nla.httrack2warc.Main "$@"

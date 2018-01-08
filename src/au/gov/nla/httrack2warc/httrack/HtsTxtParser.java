@@ -31,7 +31,7 @@ class HtsTxtParser implements Closeable {
     private static final Pattern RE = Pattern.compile("^(?<time>\\d\\d:\\d\\d:\\d\\d)\\t" +
             "(?<size>-?\\d+)/(?<remotesize>-?\\d+)\\t" +
             "(?<flags>[A-Z-]{6})\\t" +
-            "(?<statuscode>\\d+)\\t" +
+            "(?<statuscode>-?\\d+)\\t" +
             "(?<status>\\w+)[ ]\\('(?<servermsg>[^']*)'\\)\\t" +
             "(?<mime>\\S+)\\t" +
             "(?<etag>\\S+)\\t" +

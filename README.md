@@ -23,14 +23,15 @@ Options:
   -o, --outdir DIR             Directory to write output (default: current working directory).
   -s, --size BYTES             WARC size target (default: 1GB).
   -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).
-  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: ?).
+  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: system local time).
   -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
   -C, --compression none|gzip  Type of compression to use (default: gzip).
+  --cdx FILENAME               Write a CDX index file for the generated WARCs.
 ```
 
 ### Example
 
-Conduct a crawl using HTTrack:
+Conduct a crawl into a temporary directory (/tmp/crawl) using HTTrack:
 
     $ httrack -O /tmp/crawl http://www.example.org/
     Mirror launched on Mon, 08 Jan 2018 13:50:40 by HTTrack Website Copier/3.49-2 [XR&CO'2014]
@@ -38,7 +39,7 @@ Conduct a crawl using HTTrack:
     Done.www.example.org/ (1270 bytes) - OK
     Thanks for using HTTrack!
 
-Run httrack2warc over the output to produce WARC files:
+Run httrack2warc over the output to produce a WARC file. By default the output file will be named `crawl-0.warc.gz`.
 
     $ java -jar httrack2warc-shaded-0.2.0.jar /tmp/crawl
     Httrack2Warc - www.example.org/index.html -> http://www.example.org/

@@ -1,7 +1,6 @@
 # httrack2warc
-Converts HTTrack crawls to WARC files
 
-Status: First release available, only limited testing.
+Converts HTTrack crawls to WARC files.
 
 ## Usage
 

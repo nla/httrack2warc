@@ -2,6 +2,8 @@
 
 Converts HTTrack crawls to WARC files.
 
+Status: Working on many crawls but needs more testing on corner cases. We're not using it in production yet.
+
 ## Usage
 
 Download the [latest release jar](https://github.com/nla/httrack2warc/releases)

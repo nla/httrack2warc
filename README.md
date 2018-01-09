@@ -57,11 +57,6 @@ Replay the ingested WARC files using a replay tool like [pywb](https://github.co
 
 ## Known issues and limitations
 
-### Redirects
-
-Generation of HTTP redirect (30x) records is not yet implemented.  It should be possible to derive these from the log
-files.
-
 ### HTTP headers
 
 By default HTTrack does not record HTTP headers. If the --debug-headers option is specified however the file
@@ -71,6 +66,12 @@ When headers are available httrack2warc produces WARC records of type request an
 only WARC resource records are produced.
 
 The `Transfer-Encoding` header is always stripped as the encoded bytes of the message are not recorded by HTTrack.
+
+### Redirects and error codes
+
+Currently without hts-ioinfo.txt and an entry in the cache zip (newer versions of HTTrack), non-200 status code 
+responses are converted to resource records and the status code is lost. See issue #3. 
+
 
 ### IP addresses and DNS records
 

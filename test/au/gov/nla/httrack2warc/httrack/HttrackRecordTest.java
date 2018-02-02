@@ -50,13 +50,13 @@ public class HttrackRecordTest {
     public void test() throws IOException {
         try (HttrackCrawl crawl = new HttrackCrawl(crawlPath)) {
             assertEquals("3.49-2", crawl.getHttrackVersion());
-            assertEquals(LocalDateTime.parse("2017-10-25T18:41:47"), crawl.getLaunchTime());
+            assertEquals(LocalDateTime.parse("2018-02-02T15:27:21"), crawl.getLaunchTime());
 
             List<HttrackRecord> recordList = new ArrayList<>();
             crawl.forEach(recordList::add);
 
             HttrackRecord entry = recordList.get(0);
-            assertEquals(LocalDateTime.parse("2017-10-25T18:41:48"), entry.timestamp);
+            assertEquals(LocalDateTime.parse("2018-02-02T15:27:22"), entry.timestamp);
             assertEquals("http://test.example.org/", entry.url);
             assertEquals("text/html", entry.mime);
             assertEquals("GET / HTTP/1.1\r\n" +
@@ -69,12 +69,12 @@ public class HttrackRecordTest {
                     "\r\n", entry.requestHeader);
             assertEquals("HTTP/1.1 200 OK\r\n" +
                     "Server: nginx/1.12.1\r\n" +
-                    "Date: Wed, 25 Oct 2017 09:41:48 GMT\r\n" +
+                    "Date: Fri, 02 Feb 2018 06:27:22 GMT\r\n" +
                     "Content-Type: text/html\r\n" +
-                    "Content-Length: 219\r\n" +
-                    "Last-Modified: Wed, 25 Oct 2017 09:41:34 GMT\r\n" +
+                    "Content-Length: 353\r\n" +
+                    "Last-Modified: Fri, 02 Feb 2018 06:26:32 GMT\r\n" +
                     "Connection: keep-alive\r\n" +
-                    "ETag: \"59f05c4e-db\"\r\n" +
+                    "ETag: \"5a740498-161\"\r\n" +
                     "Accept-Ranges: bytes\r\n" +
                     "\r\n", entry.responseHeader);
 

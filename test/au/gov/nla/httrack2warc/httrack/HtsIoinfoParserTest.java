@@ -53,6 +53,19 @@ public class HtsIoinfoParserTest {
                     "Last-Modified: Mon, 24 Mar 2003 04:02:30 GMT\r\n" +
                     "ETag: \"5af18630baf1c21:8ad\"\r\n\r\n", ioinfo.header);
 
+            assertTrue(ioinfo.parseRecord());
+            assertTrue(ioinfo.request);
+            assertEquals("test.example.org/page WITH \"special\" chars.html", ioinfo.url);
+            assertEquals("GET /page%20WITH%20%22special%22%20chars.html HTTP/1.1\r\n" +
+                    "Referer: http://test.example.org/\r\n" +
+                    "Connection: keep-alive\r\n" +
+                    "Host: test.example.org\r\n" +
+                    "User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)\r\n" +
+                    "Accept: text/html,image/png,image/jpeg,image/pjpeg,image/x-xbitmap,image/svg+xml,image/gif;q=0.9,*/*;q=0.1\r\n" +
+                    "Accept-Language: en, *\r\n" +
+                    "Accept-Encoding: gzip, identity;q=0.9\r\n" +
+                    "\r\n", ioinfo.header);
+
             while (ioinfo.parseRecord()) {
                 assertNotNull(ioinfo.url);
             }

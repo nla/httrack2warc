@@ -67,21 +67,30 @@ public class Httrack2WarcTest {
         }
 
         assertEquals("warcinfo null\n" +
-                "response http://test.example.org/\n" +
-                "request http://test.example.org/\n" +
-                "metadata http://test.example.org/\n" +
-                "response http://test.example.org/style.css\n" +
-                "request http://test.example.org/style.css\n" +
-                "metadata http://test.example.org/style.css\n" +
-                "response http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
-                "request http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
-                "metadata http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
-                "response http://test.example.org/another\n" +
-                "request http://test.example.org/another\n" +
-                "metadata http://test.example.org/another\n" +
-                "response http://test.example.org/image.gif\n" +
-                "request http://test.example.org/image.gif\n" +
-                "metadata http://test.example.org/image.gif\n",
+                        "response http://test.example.org/\n" +
+                        "request http://test.example.org/\n" +
+                        "metadata http://test.example.org/\n" +
+                        "response http://test.example.org/style.css\n" +
+                        "request http://test.example.org/style.css\n" +
+                        "metadata http://test.example.org/style.css\n" +
+                        "response http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
+                        "request http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
+                        "metadata http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
+                        "response http://test.example.org/another\n" +
+                        "request http://test.example.org/another\n" +
+                        "metadata http://test.example.org/another\n" +
+                        "response http://test.example.org/redirect\n" +
+                        "request http://test.example.org/redirect\n" +
+                        "metadata http://test.example.org/redirect\n" +
+                        "response http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
+                        "request http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
+                        "metadata http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
+                        "response http://test.example.org/image.gif\n" +
+                        "request http://test.example.org/image.gif\n" +
+                        "metadata http://test.example.org/image.gif\n" +
+                        "response http://test.example.org/image404.png\n" +
+                        "request http://test.example.org/image404.png\n" +
+                        "metadata http://test.example.org/image404.png\n",
                 summary.toString());
     }
 

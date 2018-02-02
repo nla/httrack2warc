@@ -23,6 +23,30 @@ code=200
 >>> ETag: "5af18630baf1c21:8ad"
 
 
+[1] request for test.example.org/page WITH "special" chars.html:
+<<< GET /page%20WITH%20%22special%22%20chars.html HTTP/1.1
+<<< Referer: http://test.example.org/
+<<< Connection: keep-alive
+<<< Host: test.example.org
+<<< User-Agent: Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)
+<<< Accept: text/html,image/png,image/jpeg,image/pjpeg,image/x-xbitmap,image/svg+xml,image/gif;q=0.9,*/*;q=0.1
+<<< Accept-Language: en, *
+<<< Accept-Encoding: gzip, identity;q=0.9
+
+
+[1] response for test.example.org/page WITH "special" chars.html:
+code=200
+>>> HTTP/1.1 200 OK
+>>> Server: nginx/1.12.1
+>>> Date: Fri, 02 Feb 2018 06:27:27 GMT
+>>> Content-Type: text/html
+>>> Content-Length: 13
+>>> Last-Modified: Fri, 02 Feb 2018 06:25:05 GMT
+>>> Connection: keep-alive
+>>> ETag: "5a740441-d"
+>>> Accept-Ranges: bytes
+
+
 request for www.industry.gov.au/acreagereleases/Images/red_on.jpg:
 <<< GET /acreagereleases/Images/red_on.jpg HTTP/1.1
 <<< Referer: http://www.industry.gov.au/acreagereleases/ar_home.html

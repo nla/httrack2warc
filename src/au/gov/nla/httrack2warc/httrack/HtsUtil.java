@@ -23,14 +23,13 @@ import org.netpreserve.urlcanon.ParsedUrl;
 class HtsUtil {
     static String fixupUrl(String raw) {
         ParsedUrl url = ParsedUrl.parseUrl(raw);
-        Canonicalizer.WHATWG.canonicalize(url);
 
         // early versions of httrack wrote the URL without a scheme
         if (url.getScheme().isEmpty()) {
-            url.setScheme(new ByteString("http"));
-            url.setColonAfterScheme(new ByteString(":"));
-            url.setSlashes(new ByteString("//"));
+            url = ParsedUrl.parseUrl("http://" + raw);
         }
+
+        Canonicalizer.WHATWG.canonicalize(url);
 
         // httrack incorrectly makes requests including the fragment. Should we fix clear them?
         //url.setHashSign(ByteString.EMPTY);

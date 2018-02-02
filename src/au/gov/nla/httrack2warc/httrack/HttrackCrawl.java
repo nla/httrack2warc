@@ -143,9 +143,10 @@ public class HttrackCrawl implements Closeable {
 
         rawfile = rawfile.substring(outputDir.length());
 
-        CacheEntry cacheEntry = cache.getEntry(url);
+        String fixedUrl = HtsUtil.fixupUrl(url);
+        CacheEntry cacheEntry = cache.getEntry(fixedUrl);
         if (cacheEntry == null) {
-            throw new IOException("no cache entry: " + url);
+            throw new IOException("no cache entry: " + fixedUrl);
         }
 
         String filename = percentDecode(rawfile);
@@ -154,7 +155,9 @@ public class HttrackCrawl implements Closeable {
             throw new IOException(file + " is outside of " + dir);
         }
 
-        String fixedUrl = HtsUtil.fixupUrl(url);
+        if (requestHeaders.get(fixedUrl) == null) {
+            System.out.println(fixedUrl);
+        }
         return new HttrackRecord(
                 filename,
                 timestamp,

@@ -16,7 +16,7 @@ and run it under Java 8 or later.
 
 ```
 Usage:
-  java -jar httrack2warc-0.2.0-shaded.jar [OPTIONS...] -o outdir crawldir
+  java -jar httrack2warc-0.2.1-shaded.jar [OPTIONS...] -o outdir crawldir
 
 Options:
   -h, --help                   Show this screen.
@@ -27,6 +27,7 @@ Options:
   -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
   -C, --compression none|gzip  Type of compression to use (default: gzip).
   --cdx FILENAME               Write a CDX index file for the generated WARCs.
+  --strict                     Abort on issues normally considered a warning.
 ```
 
 ### Example

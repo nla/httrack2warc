@@ -155,9 +155,6 @@ public class HttrackCrawl implements Closeable {
             throw new IOException(file + " is outside of " + dir);
         }
 
-        if (requestHeaders.get(fixedUrl) == null) {
-            System.out.println(fixedUrl);
-        }
         return new HttrackRecord(
                 filename,
                 timestamp,

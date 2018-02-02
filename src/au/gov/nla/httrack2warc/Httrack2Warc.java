@@ -71,6 +71,7 @@ public class Httrack2Warc {
     private StringBuilder extraWarcInfo = new StringBuilder();
     private Compression compression = Compression.GZIP;
     private String cdxName = null;
+    private boolean strict = false;
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -83,6 +84,14 @@ public class Httrack2Warc {
             Set<String> processedFiles = new HashSet<>();
 
             crawl.forEach(record -> {
+                // XXX: skip missing files if they were an error message
+                // this is a workaround until we can find a better way to handle cases like .delayed files and
+                // images renamed to .html
+                if (!strict && record.getStatus() > 399 && !record.exists()) {
+                    log.warn("Missing file {} for {} URL {}", record.getFilename(), record.getStatus(), record.getUrl());
+                    return;
+                }
+
                 UUID responseRecordId = UUID.randomUUID();
 
                 // use content type if we have it, otherwise guess based on the file extension
@@ -305,5 +314,9 @@ public class Httrack2Warc {
 
     public void setCdxName(String cdxName) {
         this.cdxName = cdxName;
+    }
+
+    public void setStrict(boolean strict) {
+        this.strict = strict;
     }
 }

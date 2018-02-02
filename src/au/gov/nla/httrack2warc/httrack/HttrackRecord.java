@@ -32,8 +32,10 @@ public class HttrackRecord {
     private final String referrer;
     private final CacheEntry cacheEntry;
     private final Path path;
+    private final int status;
 
-    HttrackRecord(String filename, LocalDateTime timestamp, String url, String mime, String requestHeader, String responseHeader, String referrer, Path path, CacheEntry cacheEntry) {
+    HttrackRecord(String filename, LocalDateTime timestamp, String url, String mime, String requestHeader,
+                  String responseHeader, String referrer, Path path, CacheEntry cacheEntry, int status) {
         this.filename = filename;
         this.timestamp = timestamp;
         this.url = url;
@@ -43,6 +45,7 @@ public class HttrackRecord {
         this.referrer = referrer;
         this.path = path;
         this.cacheEntry = cacheEntry;
+        this.status = status;
     }
 
     public String getFilename() {
@@ -82,10 +85,22 @@ public class HttrackRecord {
     }
 
     public long getSize() throws IOException {
-        if (cacheEntry.getSize() > 0) {
+        if (storedInCache()) {
             return cacheEntry.getSize();
         } else {
             return Files.size(path);
         }
+    }
+
+    private boolean storedInCache() throws IOException {
+        return cacheEntry.getSize() > 0;
+    }
+
+    public boolean exists() throws IOException {
+        return storedInCache() || Files.exists(path);
+    }
+
+    public int getStatus() {
+        return status;
     }
 }

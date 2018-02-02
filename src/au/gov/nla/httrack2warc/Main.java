@@ -35,7 +35,8 @@ public class Main {
             "  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: " + ZoneId.systemDefault() + ").\n" +
             "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n" +
             "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
-            "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n";
+            "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n" +
+            "  --strict                     Abort on issues normally considered a warning.\n";
 
     public static void main(String[] args) throws IOException {
         Path crawldir = null;
@@ -80,6 +81,10 @@ public class Main {
 
                 case "--cdx":
                     httrack2Warc.setCdxName(args[++i]);
+                    break;
+
+                case "--strict":
+                    httrack2Warc.setStrict(true);
                     break;
 
                 default:

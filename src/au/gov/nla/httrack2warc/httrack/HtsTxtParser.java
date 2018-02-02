@@ -95,4 +95,8 @@ class HtsTxtParser implements Closeable {
     public String localfile() {
         return matcher.group("localfile");
     }
+
+    public int status() {
+        return Integer.parseInt(matcher.group("statuscode"));
+    }
 }

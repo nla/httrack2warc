@@ -115,7 +115,8 @@ public class HttrackCrawl implements Closeable {
                     continue; // skip 404 errors
                 }
 
-                HttrackRecord record = buildRecord(parser.time(), parser.url(), rawfile, parser.mime(), parser.referrer());
+                HttrackRecord record = buildRecord(parser.time(), parser.url(), rawfile, parser.mime(),
+                        parser.referrer(), parser.status());
                 action.accept(record);
             }
         }
@@ -129,7 +130,7 @@ public class HttrackCrawl implements Closeable {
     }
 
     private HttrackRecord buildRecord(LocalTime time, String url, String rawfile, String mime,
-                                      String referrer) throws IOException {
+                                      String referrer, int status) throws IOException {
         if (previousTime != null && time.isBefore(previousTime)) {
             // if we go backwards in time, assume we've wrapped around to the next day
             date = date.plusDays(1);
@@ -164,7 +165,8 @@ public class HttrackCrawl implements Closeable {
                 responseHeaders.get(fixedUrl),
                 referrer,
                 file,
-                cacheEntry);
+                cacheEntry,
+                status);
     }
 
     private void forEachByDebugLogs(RecordConsumer action) throws IOException {
@@ -182,7 +184,7 @@ public class HttrackCrawl implements Closeable {
                 String url = m.group(2);
                 String file = m.group(3);
 
-                HttrackRecord record = buildRecord(time, url, file, null, null);
+                HttrackRecord record = buildRecord(time, url, file, null, null, 200);
                 action.accept(record);
             }
         }

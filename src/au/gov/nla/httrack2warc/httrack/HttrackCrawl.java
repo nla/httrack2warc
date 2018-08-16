@@ -31,7 +31,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -176,6 +178,7 @@ public class HttrackCrawl implements Closeable {
     private void forEachByDebugLogs(RecordConsumer action) throws IOException {
         resetDateHeuristic();
 
+        Set<String> seen = new HashSet<>();
         try (BufferedReader reader = Files.newBufferedReader(dir.resolve("logs/debug"), ISO_8859_1)) {
             for (;;) {
                 String line = reader.readLine();
@@ -187,6 +190,12 @@ public class HttrackCrawl implements Closeable {
                 LocalTime time = LocalTime.parse(m.group(1));
                 String url = m.group(2);
                 String file = m.group(3);
+
+                if (seen.contains(file)) {
+                    log.debug("Skipping duplicate file {}", file);
+                    continue;
+                }
+                seen.add(file);
 
                 String response = responseHeaders.get(HtsUtil.fixupUrl(url));
                 int status;

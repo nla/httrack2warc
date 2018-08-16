@@ -36,6 +36,7 @@ public class Main {
             "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n" +
             "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
             "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n" +
+            "  --dont-rewrite-links         Don't rewrite links when the unmodified html is unavailable.\n" +
             "  --strict                     Abort on issues normally considered a warning.\n";
 
     public static void main(String[] args) throws IOException {
@@ -85,6 +86,10 @@ public class Main {
 
                 case "--strict":
                     httrack2Warc.setStrict(true);
+                    break;
+
+                case "--rewrite-links":
+                    httrack2Warc.setRewriteLinks(true);
                     break;
 
                 default:

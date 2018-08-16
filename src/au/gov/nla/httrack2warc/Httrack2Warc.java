@@ -20,9 +20,8 @@ import au.gov.nla.httrack2warc.httrack.HttrackCrawl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.*;
@@ -72,6 +71,7 @@ public class Httrack2Warc {
     private Compression compression = Compression.GZIP;
     private String cdxName = null;
     private boolean strict = false;
+    private boolean rewriteLinks = false;
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -82,6 +82,7 @@ public class Httrack2Warc {
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
             Set<String> processedFiles = new HashSet<>();
+            LinkRewriter linkRewriter = rewriteLinks ? new LinkRewriter(crawl) : null;
 
             crawl.forEach(record -> {
                 // XXX: skip missing files if they were an error message
@@ -120,13 +121,25 @@ public class Httrack2Warc {
                 Instant warcDate = record.getTimestamp().atZone(timezone).toInstant();
 
                 try (InputStream stream = record.openStream()) {
+                    InputStream body;
+                    if (linkRewriter != null && record.getFilename().endsWith(".html") && !record.hasCacheData()) {
+                        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                        linkRewriter.rewrite(stream, record.getFilename(), buffer);
+                        byte[] data = buffer.toByteArray();
+                        contentLength = data.length;
+                        digest = sha1Digest(new ByteArrayInputStream(data));
+                        body = new ByteArrayInputStream(data);
+                    } else {
+                        body = stream;
+                    }
+
                     String responseHeader = record.getResponseHeader();
                     if (responseHeader != null) {
                         responseHeader = removeTransferEncodingHeader(responseHeader);
                         warc.writeResponseRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength,
-                                responseHeader, stream);
+                                responseHeader, body);
                     } else {
-                        warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, stream);
+                        warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, body);
                     }
                 }
 
@@ -322,5 +335,9 @@ public class Httrack2Warc {
 
     public void setStrict(boolean strict) {
         this.strict = strict;
+    }
+
+    public void setRewriteLinks(boolean rewriteLinks) {
+        this.rewriteLinks = rewriteLinks;
     }
 }

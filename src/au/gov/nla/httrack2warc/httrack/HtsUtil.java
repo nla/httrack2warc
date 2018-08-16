@@ -20,8 +20,8 @@ import org.netpreserve.urlcanon.ByteString;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
 
-class HtsUtil {
-    static String fixupUrl(String raw) {
+public class HtsUtil {
+    public static String fixupUrl(String raw) {
         ParsedUrl url = ParsedUrl.parseUrl(raw);
 
         // early versions of httrack wrote the URL without a scheme

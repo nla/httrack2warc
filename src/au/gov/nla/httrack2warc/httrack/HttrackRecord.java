@@ -77,7 +77,7 @@ public class HttrackRecord {
     }
 
     public InputStream openStream() throws IOException {
-        if (cacheEntry != null && cacheEntry.hasData()) {
+        if (hasCacheData()) {
             return cacheEntry.openStream();
         } else {
             return Files.newInputStream(path);
@@ -85,7 +85,7 @@ public class HttrackRecord {
     }
 
     public long getSize() throws IOException {
-        if (cacheEntry != null && cacheEntry.hasData()) {
+        if (hasCacheData()) {
             return cacheEntry.getSize();
         } else {
             return Files.size(path);
@@ -93,10 +93,14 @@ public class HttrackRecord {
     }
 
     public boolean exists() throws IOException {
-        return (cacheEntry != null && cacheEntry.hasData()) || Files.exists(path);
+        return hasCacheData() || Files.exists(path);
     }
 
     public int getStatus() {
         return status;
+    }
+
+    public boolean hasCacheData() {
+        return cacheEntry != null && cacheEntry.hasData();
     }
 }

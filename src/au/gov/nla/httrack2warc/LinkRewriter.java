@@ -18,7 +18,7 @@ public class LinkRewriter {
 
     LinkRewriter(HttrackCrawl crawl) throws IOException {
         crawl.forEach(record -> {
-            ParsedUrl httrackUrl = ParsedUrl.parseUrl("httrack:///" + record.getFilename());
+            ParsedUrl httrackUrl = ParsedUrl.parseUrl("http://httrack/" + record.getFilename());
             Canonicalizer.SEMANTIC.canonicalize(httrackUrl);
             urlMap.put(httrackUrl.toString(), record.getUrl());
         });
@@ -33,7 +33,7 @@ public class LinkRewriter {
     }
 
     void rewrite(InputStream stream, String filename, OutputStream out) throws IOException {
-        URI baseUrl = URI.create("httrack:///" + filename);
+        URI baseUrl = URI.create("http://httrack/" + filename);
         Source source = new Source(stream);
         OutputDocument outputDocument = new OutputDocument(source);
 
@@ -57,7 +57,7 @@ public class LinkRewriter {
                 parsed.setQuestionMark(ByteString.EMPTY);
 
                 String original;
-                if (parsed.toString().equals("httrack:///external.html") && url.getRawQuery() != null && url.getRawQuery().startsWith("link=")) {
+                if (parsed.toString().equals("http://httrack/external.html") && url.getRawQuery() != null && url.getRawQuery().startsWith("link=")) {
                     original = HtsUtil.fixupUrl(url.getRawQuery().substring("link=".length()));
                 } else {
                     original = urlMap.get(parsed.toString());

@@ -17,6 +17,8 @@
 package au.gov.nla.httrack2warc.httrack;
 
 import au.gov.nla.httrack2warc.ParsingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -51,6 +53,7 @@ public class HttrackCrawl implements Closeable {
     private LocalDate date;
     private LocalTime previousTime;
     private final Cache cache;
+    private Logger log = LoggerFactory.getLogger(HttrackCrawl.class);
 
     public HttrackCrawl(Path dir) throws IOException {
         this.dir = dir;
@@ -78,7 +81,9 @@ public class HttrackCrawl implements Closeable {
         for (String file: LOG_FILE_NAMES) {
             try (HtsLogParser htsLog = new HtsLogParser(Files.newInputStream(dir.resolve(file)))) {
                 httrackVersion = htsLog.version;
-                return;
+                launchTime = htsLog.launchTime;
+                outputDir = htsLog.outputDir;
+                httrackOptions = htsLog.commandLine;
             } catch (NoSuchFileException e) {
                 // try next
             }
@@ -87,7 +92,9 @@ public class HttrackCrawl implements Closeable {
     }
 
     private void parseDoitLog() throws IOException {
-        try (InputStream stream = Files.newInputStream(dir.resolve("hts-cache/doit.log"))) {
+        Path logFile = dir.resolve("hts-cache/doit.log");
+        if (!Files.exists(logFile)) return;
+        try (InputStream stream = Files.newInputStream(logFile)) {
             HtsDoitParser doitLog = new HtsDoitParser(stream);
             launchTime = doitLog.crawlStartTime;
             outputDir = doitLog.outputDir;
@@ -145,10 +152,7 @@ public class HttrackCrawl implements Closeable {
         rawfile = rawfile.substring(outputDir.length());
 
         String fixedUrl = HtsUtil.fixupUrl(url);
-        CacheEntry cacheEntry = cache.getEntry(fixedUrl);
-        if (cacheEntry == null) {
-            throw new IOException("no cache entry: " + fixedUrl);
-        }
+        CacheEntry cacheEntry = cache == null ? null : cache.getEntry(fixedUrl);
 
         String filename = percentDecode(rawfile);
         Path file = dir.resolve(filename);
@@ -184,7 +188,15 @@ public class HttrackCrawl implements Closeable {
                 String url = m.group(2);
                 String file = m.group(3);
 
-                HttrackRecord record = buildRecord(time, url, file, null, null, 200);
+                String response = responseHeaders.get(HtsUtil.fixupUrl(url));
+                int status;
+                if (response != null) {
+                    status = Integer.parseInt(response.split(" ")[1]);
+                } else {
+                    status = 200;
+                }
+
+                HttrackRecord record = buildRecord(time, url, file, null, null, status);
                 action.accept(record);
             }
         }
@@ -213,8 +225,11 @@ public class HttrackCrawl implements Closeable {
         Path zipFile = dir.resolve("hts-cache/new.zip");
         if (Files.exists(zipFile)) {
             return new ZipCache(zipFile);
-        } else {
+        } else if (Files.exists(dir.resolve("hts-cache/new.ndx"))) {
             return new NdxCache(dir);
+        } else {
+            log.warn("Cache not found, proceeding anyway.");
+            return null;
         }
     }
 
@@ -232,7 +247,9 @@ public class HttrackCrawl implements Closeable {
 
     @Override
     public void close() throws IOException {
-        cache.close();
+        if (cache != null) {
+            cache.close();
+        }
     }
 
     public interface RecordConsumer {

@@ -20,6 +20,7 @@ import au.gov.nla.httrack2warc.ParsingException;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,15 +28,19 @@ class HtsLogParser implements Closeable {
     private static final Pattern HEADER_RE = Pattern.compile("HTTrack(?<version>[^ ]+) launched on " +
             "(?<date>\\w+, \\d\\d \\w+ \\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d) at " +
             "(?<seedsAndFilters>.*)");
+    private static final Pattern CMDLINE_RE = Pattern.compile("\\(.*-O ?(?:\"([^\"]*)\"|([^ ]*)) .*");
 
     private final BufferedReader reader;
     String version;
-    String launchDate;
+    LocalDateTime launchTime;
     String seedsAndFilters;
+    String outputDir;
+    String commandLine;
 
     HtsLogParser(BufferedReader reader) throws IOException {
         this.reader = reader;
         readHeader();
+        readCmdLine();
     }
 
     HtsLogParser(InputStream stream) throws IOException {
@@ -52,8 +57,27 @@ class HtsLogParser implements Closeable {
             throw new ParsingException("invalid hts-log.txt header: " + line);
         }
         version = matcher.group("version");
-        launchDate = matcher.group("date");
+        launchTime = LocalDateTime.parse(matcher.group("date"), HtsDoitParser.HTS_LOCAL_DATE);
         seedsAndFilters = matcher.group("seedsAndFilters");
+    }
+
+    private void readCmdLine() throws IOException {
+        String line = reader.readLine();
+        if (line == null) {
+            return;
+        }
+        commandLine = line.substring(1, line.length() - 1).trim().split(" ", 2)[1];
+        Matcher matcher = CMDLINE_RE.matcher(line);
+        if (!matcher.matches()) {
+            return;
+        }
+        outputDir = matcher.group(1);
+        if (outputDir == null) {
+            outputDir = matcher.group(2);
+        }
+        if (!outputDir.endsWith("/")) {
+            outputDir += "/";
+        }
     }
 
     @Override

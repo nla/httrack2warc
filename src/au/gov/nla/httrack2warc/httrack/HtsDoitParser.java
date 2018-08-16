@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 class HtsDoitParser {
     private static final Pattern DOIT_CMDLINE_RE = Pattern.compile(".*-O ?(?:\"([^\"]*)\"|([^ ]*)) .*");
     private static final Pattern DOIT_TS_RE = Pattern.compile("File generated automatically on (.*), do NOT edit");
-    private static final DateTimeFormatter HTS_LOCAL_DATE = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss", Locale.US);
+    static final DateTimeFormatter HTS_LOCAL_DATE = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss", Locale.US);
 
     String outputDir;
     LocalDateTime crawlStartTime;

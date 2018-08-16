@@ -19,6 +19,7 @@ package au.gov.nla.httrack2warc.httrack;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,7 +30,9 @@ public class HtsLogParserTest {
         try (HtsLogParser htsLog = new HtsLogParser(getClass().getResourceAsStream("test-hts-log.txt"))) {
             assertEquals("3.21-4", htsLog.version);
             assertEquals("http://www.industry.gov.au/acreagereleases/ar_home.html -pandora.nla.gov.au* -www.nla.gov.au/pandora*", htsLog.seedsAndFilters);
-            assertEquals("Thu, 03 Apr 2003 01:00:14", htsLog.launchDate);
+            assertEquals(LocalDateTime.parse("2003-04-03T01:00:14"), htsLog.launchTime);
+            assertEquals("/pandas/working/13982/20030403/", htsLog.outputDir);
+            assertEquals("http://www.industry.gov.au/acreagereleases/ar_home.html -O \"/pandas/working/13982/20030403\" -%HzZfI0A50000c6H1tx%xo0b1%sqZI0%I0%Hr50M1000000000E172800%PnK0L1p3Das0 -j -%A standard -%U pandora -#Z -#f -pandora.nla.gov.au* -www.nla.gov.au/pandora*", htsLog.commandLine);
         }
     }
 }

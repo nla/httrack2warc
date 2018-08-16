@@ -92,6 +92,10 @@ public class Httrack2Warc {
                     return;
                 }
 
+                if (!record.exists()) {
+                    log.error("Missing file {} for {} URL {}", record.getFilename(), record.getStatus(), record.getUrl());
+                }
+
                 UUID responseRecordId = UUID.randomUUID();
 
                 // use content type if we have it, otherwise guess based on the file extension

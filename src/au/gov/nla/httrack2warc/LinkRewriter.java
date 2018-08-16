@@ -18,8 +18,9 @@ public class LinkRewriter {
 
     LinkRewriter(HttrackCrawl crawl) throws IOException {
         crawl.forEach(record -> {
-            String httrackUrl = "file:///" + record.getFilename();
-            urlMap.put(httrackUrl, record.getUrl());
+            ParsedUrl httrackUrl = ParsedUrl.parseUrl("httrack:///" + record.getFilename());
+            Canonicalizer.SEMANTIC.canonicalize(httrackUrl);
+            urlMap.put(httrackUrl.toString(), record.getUrl());
         });
     }
 
@@ -32,7 +33,7 @@ public class LinkRewriter {
     }
 
     void rewrite(InputStream stream, String filename, OutputStream out) throws IOException {
-        URI baseUrl = URI.create("file:///" + filename);
+        URI baseUrl = URI.create("httrack:///" + filename);
         Source source = new Source(stream);
         OutputDocument outputDocument = new OutputDocument(source);
 
@@ -51,14 +52,12 @@ public class LinkRewriter {
                 String fragment = url.getRawFragment();
 
                 ParsedUrl parsed = ParsedUrl.parseUrl(url.toString());
-                Canonicalizer.WHATWG.canonicalize(parsed);
+                Canonicalizer.SEMANTIC.canonicalize(parsed);
                 parsed.setQuery(ByteString.EMPTY);
                 parsed.setQuestionMark(ByteString.EMPTY);
-                parsed.setHashSign(ByteString.EMPTY);
-                parsed.setFragment(ByteString.EMPTY);
 
                 String original;
-                if (parsed.toString().equals("file:///external.html") && url.getRawQuery() != null && url.getRawQuery().startsWith("link=")) {
+                if (parsed.toString().equals("httrack:///external.html") && url.getRawQuery() != null && url.getRawQuery().startsWith("link=")) {
                     original = HtsUtil.fixupUrl(url.getRawQuery().substring("link=".length()));
                 } else {
                     original = urlMap.get(parsed.toString());

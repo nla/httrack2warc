@@ -41,9 +41,12 @@ public class LinkRewriter {
                 if (!attr.hasValue()) continue;
                 String value = attr.getValue();
 
-                value = value.replace("<br>", "");
-
-                URI url = baseUrl.resolve(value);
+                URI url;
+                try {
+                    url = baseUrl.resolve(value);
+                } catch (IllegalArgumentException e) {
+                    continue;
+                }
 
                 String fragment = url.getRawFragment();
 

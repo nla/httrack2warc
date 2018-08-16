@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.file.*;
@@ -122,6 +121,7 @@ public class Httrack2Warc {
 
                 try (InputStream stream = record.openStream()) {
                     InputStream body;
+
                     if (linkRewriter != null && record.getFilename().endsWith(".html") && !record.hasCacheData()) {
                         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                         linkRewriter.rewrite(stream, record.getFilename(), buffer);
@@ -136,6 +136,7 @@ public class Httrack2Warc {
                     String responseHeader = record.getResponseHeader();
                     if (responseHeader != null) {
                         responseHeader = removeTransferEncodingHeader(responseHeader);
+                        responseHeader = fixContentLength(responseHeader, contentLength);
                         warc.writeResponseRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength,
                                 responseHeader, body);
                     } else {
@@ -186,6 +187,7 @@ public class Httrack2Warc {
     }
 
     private static Pattern TRANSFER_ENCODING_RE = Pattern.compile("^\\s*Transfer-Encoding\\s*:.*\r\n", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static Pattern CONTENT_LENGTH_RE = Pattern.compile("^\\s*Content-Length\\s*:.*\r\n", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     /**
      * Remove the Transfer-Encoding response header. We do this as we don't have the original encoded bytes and
@@ -194,6 +196,14 @@ public class Httrack2Warc {
      */
     static String removeTransferEncodingHeader(String header) {
         return TRANSFER_ENCODING_RE.matcher(header).replaceAll("");
+    }
+
+    /**
+     * We replace the Content-Length header as link rewriting (by either us or HTTrack) may have changed the
+     * length of the body.
+     */
+    static String fixContentLength(String header, long length) {
+        return CONTENT_LENGTH_RE.matcher(header).replaceAll("Content-Length: " +  length + "\r\n");
     }
 
     private String formatWarcInfo(HttrackCrawl crawl) {

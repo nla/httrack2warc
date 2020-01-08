@@ -96,15 +96,17 @@ class WarcWriter implements Closeable {
     }
 
     void writeResponseRecord(String url, String contentType, String digest, UUID uuid, Instant date,
-                             long contentLength, String responseHeader, InputStream body) throws IOException {
+                             long contentLength, String responseHeader, InputStream body, String truncated)
+            throws IOException {
         byte[] responseHeaderBytes = responseHeader.getBytes(ISO_8859_1);
         long blockLength = contentLength + responseHeaderBytes.length;
         String header = "WARC/1.0\r\n" +
                 "WARC-Type: response\r\n" +
                 "WARC-Target-URI: " + url + "\r\n" +
                 "WARC-Date: " + WARC_DATE.format(date) + "\r\n" +
-                "WARC-Payload-Digest: sha1:" + digest + "\r\n" +
+                (digest != null ? "WARC-Payload-Digest: sha1:" + digest + "\r\n" : "") +
                 "WARC-Record-ID: <urn:uuid:" + uuid + ">\r\n" +
+                (truncated != null ? "WARC-Truncated: " + truncated + "\r\n" : "") +
                 "Content-Type: application/http; msgtype=response\r\n" +
                 "Content-Length: " + blockLength + "\r\n" +
                 "\r\n";

@@ -92,7 +92,7 @@ public class Httrack2Warc {
                     return;
                 }
 
-                if (!record.exists()) {
+                if (!record.exists() && !record.isRedirect()) {
                     log.error("Missing file {} for {} URL {}", record.getFilename(), record.getStatus(), record.getUrl());
                 }
 
@@ -103,12 +103,14 @@ public class Httrack2Warc {
                 if (contentType == null) contentType = mimeTypes.forFilename(record.getFilename());
                 if (contentType == null) contentType = "application/octet-stream";
 
-                log.info("{} -> {}", record.getFilename(), record.getUrl());
+                log.info("{}{} -> {}", record.getFilename(), record.hasCacheData() ? " (cache)" : "", record.getUrl());
 
                 long contentLength = record.getSize();
-                String digest;
-                try (InputStream stream = record.openStream()) {
-                    digest = sha1Digest(stream);
+                String digest = null;
+                if (record.exists()) {
+                    try (InputStream stream = record.openStream()) {
+                        digest = sha1Digest(stream);
+                    }
                 }
 
                 // we only allow rotations at the start of each set of records to ensure they're always
@@ -135,10 +137,16 @@ public class Httrack2Warc {
 
                     String responseHeader = record.getResponseHeader();
                     if (responseHeader != null) {
-                        responseHeader = removeTransferEncodingHeader(responseHeader);
-                        responseHeader = fixContentLength(responseHeader, contentLength);
+                        String truncated;
+                        if (record.exists()) {
+                            responseHeader = removeTransferEncodingHeader(responseHeader);
+                            responseHeader = fixContentLength(responseHeader, contentLength);
+                            truncated = null;
+                        } else {
+                            truncated = "unspecified";
+                        }
                         warc.writeResponseRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength,
-                                responseHeader, body);
+                                responseHeader, body, truncated);
                     } else {
                         warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, body);
                     }

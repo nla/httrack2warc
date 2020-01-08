@@ -51,7 +51,8 @@ class NdxCache implements Cache {
                 String host = hostAndPath.substring(0, i);
                 String path = hostAndPath.substring(i + 1, hostAndPath.length() - 1);
                 String url = host + path;
-                entries.put(url, position);
+                String fixedUrl = HtsUtil.fixupUrl(url);
+                entries.put(fixedUrl, position);
             }
         }
     }

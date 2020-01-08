@@ -16,6 +16,7 @@
 
 package au.gov.nla.httrack2warc.httrack;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,21 +80,25 @@ public class HttrackRecord {
     public InputStream openStream() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.openStream();
-        } else {
+        } else if (path != null) {
             return Files.newInputStream(path);
+        } else {
+            return new ByteArrayInputStream(new byte[0]);
         }
     }
 
     public long getSize() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.getSize();
-        } else {
+        } else if (path != null) {
             return Files.size(path);
+        } else {
+            return 0;
         }
     }
 
     public boolean exists() throws IOException {
-        return hasCacheData() || Files.exists(path);
+        return hasCacheData() || path != null && Files.exists(path);
     }
 
     public int getStatus() {
@@ -102,5 +107,9 @@ public class HttrackRecord {
 
     public boolean hasCacheData() {
         return cacheEntry != null && cacheEntry.hasData();
+    }
+
+    public boolean isRedirect() {
+        return getStatus() >= 300 && getStatus() <= 399;
     }
 }

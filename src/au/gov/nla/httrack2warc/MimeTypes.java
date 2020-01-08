@@ -48,6 +48,7 @@ public class MimeTypes {
 
 
     public String forFilename(String filename) {
+        if (filename == null) return null;
         int i = filename.lastIndexOf(".");
         if (i < 0) {
             return null;

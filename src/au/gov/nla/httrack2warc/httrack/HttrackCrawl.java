@@ -140,23 +140,18 @@ public class HttrackCrawl implements Closeable {
 
     private HttrackRecord buildRecord(LocalTime time, String url, String rawfile, String mime,
                                       String referrer, int status) throws IOException {
-        if (previousTime != null && time.isBefore(previousTime)) {
-            // if we go backwards in time, assume we've wrapped around to the next day
-            date = date.plusDays(1);
-        }
-        LocalDateTime timestamp = time.atDate(date);
-        previousTime = time;
+        LocalDateTime timestamp = applyDateHeuristic(time);
 
         if (!rawfile.startsWith(outputDir)) {
             throw new ParsingException("new.txt localfile (" + rawfile + ") outside output dir (" + outputDir + ")");
         }
 
-        rawfile = rawfile.substring(outputDir.length());
+        String relfile = rawfile.substring(outputDir.length());
 
         String fixedUrl = HtsUtil.fixupUrl(url);
         CacheEntry cacheEntry = cache == null ? null : cache.getEntry(fixedUrl);
 
-        String filename = percentDecode(rawfile);
+        String filename = percentDecode(relfile);
         Path file = dir.resolve(filename);
         if (!file.toAbsolutePath().startsWith(dir.toAbsolutePath())) {
             throw new IOException(file + " is outside of " + dir);
@@ -175,6 +170,16 @@ public class HttrackCrawl implements Closeable {
                 status);
     }
 
+    private LocalDateTime applyDateHeuristic(LocalTime time) {
+        if (previousTime != null && time.isBefore(previousTime)) {
+            // if we go backwards in time, assume we've wrapped around to the next day
+            date = date.plusDays(1);
+        }
+        LocalDateTime timestamp = time.atDate(date);
+        previousTime = time;
+        return timestamp;
+    }
+
     private void forEachByDebugLogs(RecordConsumer action) throws IOException {
         resetDateHeuristic();
 
@@ -191,11 +196,10 @@ public class HttrackCrawl implements Closeable {
                 String url = m.group(2);
                 String file = m.group(3);
 
-                if (seen.contains(file)) {
+                if (!seen.add(file)) {
                     log.debug("Skipping duplicate file {}", file);
                     continue;
                 }
-                seen.add(file);
 
                 String response = responseHeaders.get(HtsUtil.fixupUrl(url));
                 int status;
@@ -212,7 +216,43 @@ public class HttrackCrawl implements Closeable {
 
         resetDateHeuristic();
 
-        // TODO: redirects
+        try (BufferedReader reader = Files.newBufferedReader(dir.resolve("logs/warn"), ISO_8859_1)) {
+            for (; ; ) {
+                String line = reader.readLine();
+                if (line == null) break;
+
+                Matcher m = WARN_MOVED_RE.matcher(line);
+                if (!m.matches()) continue;
+
+                LocalTime time = LocalTime.parse(m.group(1));
+                String url = m.group(2);
+                String dst = m.group(3);
+
+                if (!seen.add(url)) {
+                    log.debug("Skipping duplicate redirect {} -> {}", url, dst);
+                    continue;
+                }
+
+                String fixedUrl = HtsUtil.fixupUrl(url);
+                String request = requestHeaders.get(fixedUrl);
+                String response = responseHeaders.get(fixedUrl);
+                int status;
+                if (response == null) {
+                    // if we don't have any response header we fabricate one as there's no way to record a redirect
+                    // without one
+                    status = 302;
+                    response = "HTTP/1.0 302 Found\r\nLocation: " + dst + "\r\nServer: httrack2warc reconstructed header\r\n\r\n";
+                } else {
+                    status = Integer.parseInt(response.split(" ")[1]);
+                }
+
+                HttrackRecord record = new HttrackRecord(null, applyDateHeuristic(time), fixedUrl, null,
+                        request, response, null, null, null, status);
+                action.accept(record);
+            }
+        }
+
+        resetDateHeuristic();
     }
 
     private String percentDecode(String s) {

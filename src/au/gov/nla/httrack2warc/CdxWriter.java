@@ -77,14 +77,15 @@ public class CdxWriter implements Closeable {
         Files.deleteIfExists(tmpCdxPath);
     }
 
-    void writeLine(String url, String contentType, String digest, Instant date, WarcWriter.RecordPosition recordPosition, Path filename) throws IOException {
+    void writeLine(String url, String contentType, int status, String digest, Instant date, WarcWriter.RecordPosition recordPosition, Path filename) throws IOException {
         String cdxLine;
+        String digestField = digest != null ? digest : "-";
         if (cdx11Format) {
-            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " 200 " +
-                    digest + " - - " + recordPosition.length() + " " + recordPosition.start + " " + filename + "\n";
+            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " " + status + " " +
+                    digestField + " - - " + recordPosition.length() + " " + recordPosition.start + " " + filename + "\n";
         } else {
-            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " 200 " +
-                    digest + " - " + recordPosition.start + " " + filename + "\n";
+            cdxLine = url + " " + ARC_DATE.format(date) + " " + url + " " + contentType + " " + status + " " +
+                    digestField + " - " + recordPosition.start + " " + filename + "\n";
         }
         log.debug(cdxLine);
         writer.write(cdxLine);

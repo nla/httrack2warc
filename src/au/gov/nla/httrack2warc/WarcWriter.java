@@ -116,7 +116,8 @@ class WarcWriter implements Closeable {
         });
         if (cdxWriter != null) {
             Path filename = recordPosition.file.getFileName();
-            cdxWriter.writeLine(url, contentType, digest, date, recordPosition, filename);
+            int status = Integer.parseInt(responseHeader.split(" ", 3)[1]);
+            cdxWriter.writeLine(url, contentType, status, digest, date, recordPosition, filename);
         }
     }
 
@@ -134,7 +135,7 @@ class WarcWriter implements Closeable {
         RecordPosition recordPosition = writeRecord(header, gzos -> copyStream(body, gzos));
         if (cdxWriter != null) {
             Path filename = recordPosition.file.getFileName();
-            cdxWriter.writeLine(url, contentType, digest, date, recordPosition, filename);
+            cdxWriter.writeLine(url, contentType, 200, digest, date, recordPosition, filename);
         }
     }
 

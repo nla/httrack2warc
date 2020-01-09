@@ -80,7 +80,7 @@ public class HttrackRecord {
     public InputStream openStream() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.openStream();
-        } else if (path != null) {
+        } else if (path != null && Files.exists(path)) {
             return Files.newInputStream(path);
         } else {
             return new ByteArrayInputStream(new byte[0]);
@@ -90,7 +90,7 @@ public class HttrackRecord {
     public long getSize() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.getSize();
-        } else if (path != null) {
+        } else if (path != null && Files.exists(path)) {
             return Files.size(path);
         } else {
             return 0;

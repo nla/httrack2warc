@@ -23,13 +23,17 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
@@ -103,7 +107,7 @@ public class Httrack2Warc {
                 if (contentType == null) contentType = mimeTypes.forFilename(record.getFilename());
                 if (contentType == null) contentType = "application/octet-stream";
 
-                log.info("{}{} -> {}", record.getFilename(), record.hasCacheData() ? " (cache)" : "", record.getUrl());
+                log.info("{} {}{} -> {}", record.getTimestamp().format(ISO_LOCAL_DATE_TIME), record.getFilename(), record.hasCacheData() ? " (cache)" : "", record.getUrl());
 
                 long contentLength = record.getSize();
                 String digest = null;

@@ -117,6 +117,7 @@ public class HttrackCrawl implements Closeable {
     private void forEachByTxt(RecordConsumer action) throws IOException {
         resetDateHeuristic();
 
+        HashSet<String> seen = new HashSet<>();
         try (HtsTxtParser parser = new HtsTxtParser(Files.newInputStream(dir.resolve("hts-cache/new.txt")))) {
             while (parser.readRecord()) {
                 String rawfile = parser.localfile();
@@ -124,13 +125,15 @@ public class HttrackCrawl implements Closeable {
                     continue; // skip 404 errors
                 }
 
+                seen.add(rawfile);
+
                 HttrackRecord record = buildRecord(parser.time(), parser.url(), rawfile, parser.mime(),
                         parser.referrer(), parser.status());
                 action.accept(record);
             }
         }
 
-        // TODO: redirects
+        forEachRedirectInWarnLog(dir.resolve("hts-err.txt"), seen, action);
     }
 
     private void resetDateHeuristic() {
@@ -214,9 +217,17 @@ public class HttrackCrawl implements Closeable {
             }
         }
 
+        forEachRedirectInWarnLog(dir.resolve("logs/warn"), seen, action);
+
+        resetDateHeuristic();
+    }
+
+    private void forEachRedirectInWarnLog(Path logFile, Set<String> seen, RecordConsumer action) throws IOException {
+        if (!Files.exists(logFile)) return;
+
         resetDateHeuristic();
 
-        try (BufferedReader reader = Files.newBufferedReader(dir.resolve("logs/warn"), ISO_8859_1)) {
+        try (BufferedReader reader = Files.newBufferedReader(logFile, ISO_8859_1)) {
             for (; ; ) {
                 String line = reader.readLine();
                 if (line == null) break;
@@ -251,8 +262,6 @@ public class HttrackCrawl implements Closeable {
                 action.accept(record);
             }
         }
-
-        resetDateHeuristic();
     }
 
     private String percentDecode(String s) {

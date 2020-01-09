@@ -17,9 +17,15 @@
 package au.gov.nla.httrack2warc;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZoneId;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
 
 public class Main {
     private static final String USAGE = "Convert HTTrack web crawls to WARC files\n" +
@@ -115,6 +121,61 @@ public class Main {
             System.exit(1);
         }
 
-        httrack2Warc.convert(crawldir);
+        String filename = crawldir.getFileName().toString();
+        if (!Files.isDirectory(crawldir) && (filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))) {
+            convertTarball(crawldir, httrack2Warc);
+        } else {
+            httrack2Warc.convert(crawldir);
+        }
+    }
+
+    private static void convertTarball(Path crawldir, Httrack2Warc httrack2Warc) throws IOException {
+        Path tmp = Files.createTempDirectory("httrack2warc");
+        System.err.println("Unpacking " + crawldir + " to " + tmp);
+        try {
+            try {
+                int exitval = new ProcessBuilder("tar", "-C", tmp.toString(), "-zxf", crawldir.toAbsolutePath()
+                        .toString()).inheritIO().start().waitFor();
+                if (exitval != 0) {
+                    throw new IOException("Unable to untar " + crawldir);
+                }
+            } finally {
+                fixPermissions(tmp);
+            }
+            Optional<Path> cacheDir = Files.walk(tmp).filter(p -> p.getFileName().toString().equals("hts-cache") && Files.isDirectory(p)).findFirst();
+            if (!cacheDir.isPresent()) throw new IOException("Unable to find hts-cache directory in archive");
+            System.err.println("Found httrack crawl under " + cacheDir.get().getParent());
+            httrack2Warc.convert(cacheDir.get().getParent());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            deleteRecursively(tmp);
+        }
+    }
+
+    private static void deleteRecursively(Path dir) throws IOException {
+        Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private static void fixPermissions(Path dir) throws IOException {
+        Set<PosixFilePermission> dirPerms = PosixFilePermissions.fromString("rwx------");
+        Set<PosixFilePermission> filePerms = PosixFilePermissions.fromString("rw-------");
+        Files.walk(dir).forEach(path -> {
+            try {
+                if (Files.isDirectory(path)) {
+                    Files.setPosixFilePermissions(path, dirPerms);
+                } else if (Files.isRegularFile(path)) {
+                    Files.setPosixFilePermissions(path, filePerms);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 }

@@ -30,10 +30,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,8 +46,9 @@ public class HttrackCrawl implements Closeable {
     private LocalDateTime launchTime;
     private String httrackOptions;
     private String outputDir;
-    private final Map<String,String> requestHeaders = new HashMap<>();
-    private final Map<String,String> responseHeaders = new HashMap<>();
+    private final Map<String, Queue<String>> requestHeaders = new HashMap<>();
+    private final Map<String, Queue<String>> responseHeaders = new HashMap<>();
+    private static final ArrayDeque<String> EMPTY_QUEUE = new ArrayDeque<>();
     private static final String[] LOG_FILE_NAMES = new String[]{"hts-log.txt", "logs/gen"};
     private LocalDate date;
     private LocalTime previousTime;
@@ -70,13 +68,25 @@ public class HttrackCrawl implements Closeable {
     private void parseIoinfo() throws IOException {
         try (HtsIoinfoParser ioinfo = new HtsIoinfoParser(Files.newInputStream(dir.resolve("hts-ioinfo.txt")))) {
             while (ioinfo.parseRecord()) {
-                String url = HtsUtil.fixupUrl(ioinfo.url);
-                Map<String, String> map = ioinfo.request ? requestHeaders : responseHeaders;
-                map.put(url, ioinfo.header);
+                // XXX: in all examples I've seen hts-ioinfo.txt has the scheme part of the URL stripped
+                // this leaves us with a conflict in the common case of crawls with two urls
+                // only differing by http:// and https:// (often the former is a redirect)
+                // so we add both to a queue and remove them when looking up and hope the order is preserved
+                // I'm uncomfortable with this but don't see any other options and it seems to work ok so far
+                String url = ioinfo.url;
+                if (url.startsWith("http://") || url.startsWith("https://")) {
+                    log.warn("URL in hts-ioinfo.txt unexpectedly has a scheme. We may not be handling this case correctly.");
+                }
+                Map<String, Queue<String>> map = ioinfo.request ? requestHeaders : responseHeaders;
+                map.computeIfAbsent(makeHeaderKey(url), k -> new ArrayDeque<>()).add(ioinfo.header);
             }
         } catch (NoSuchFileException e) {
             // that's ok
         }
+    }
+
+    private static String makeHeaderKey(String url) {
+        return HtsUtil.stripProtocol(HtsUtil.fixupUrl(url));
     }
 
     private void parseHtsLog() throws IOException {
@@ -142,7 +152,7 @@ public class HttrackCrawl implements Closeable {
     }
 
     private HttrackRecord buildRecord(LocalTime time, String url, String rawfile, String mime,
-                                      String referrer, int status) throws IOException {
+                                      String referrer, Integer status) throws IOException {
         LocalDateTime timestamp = applyDateHeuristic(time);
 
         if (!rawfile.startsWith(outputDir)) {
@@ -160,13 +170,24 @@ public class HttrackCrawl implements Closeable {
             throw new IOException(file + " is outside of " + dir);
         }
 
+        String requestHeader = requestHeaders.getOrDefault(makeHeaderKey(url), EMPTY_QUEUE).poll();
+        String responseHeader = responseHeaders.getOrDefault(makeHeaderKey(url), EMPTY_QUEUE).poll();
+
+        if (status == null) {
+            if (responseHeader != null) {
+                status = Integer.parseInt(responseHeader.split(" ", 3)[1]);
+            } else {
+                status = 200;
+            }
+        }
+
         return new HttrackRecord(
                 filename,
                 timestamp,
                 fixedUrl,
                 mime,
-                requestHeaders.get(fixedUrl),
-                responseHeaders.get(fixedUrl),
+                requestHeader,
+                responseHeader,
                 referrer,
                 file,
                 cacheEntry,
@@ -204,15 +225,7 @@ public class HttrackCrawl implements Closeable {
                     continue;
                 }
 
-                String response = responseHeaders.get(HtsUtil.fixupUrl(url));
-                int status;
-                if (response != null) {
-                    status = Integer.parseInt(response.split(" ")[1]);
-                } else {
-                    status = 200;
-                }
-
-                HttrackRecord record = buildRecord(time, url, file, null, null, status);
+                HttrackRecord record = buildRecord(time, url, file, null, null, null);
                 action.accept(record);
             }
         }
@@ -245,8 +258,8 @@ public class HttrackCrawl implements Closeable {
                 }
 
                 String fixedUrl = HtsUtil.fixupUrl(url);
-                String request = requestHeaders.get(fixedUrl);
-                String response = responseHeaders.get(fixedUrl);
+                String request = requestHeaders.getOrDefault(makeHeaderKey(url), EMPTY_QUEUE).poll();
+                String response = responseHeaders.getOrDefault(makeHeaderKey(url), EMPTY_QUEUE).poll();
                 int status;
                 if (response == null) {
                     // if we don't have any response header we fabricate one as there's no way to record a redirect

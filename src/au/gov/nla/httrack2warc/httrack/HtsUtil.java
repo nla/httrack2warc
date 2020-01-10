@@ -20,7 +20,11 @@ import org.netpreserve.urlcanon.ByteString;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
 
+import java.util.regex.Pattern;
+
 public class HtsUtil {
+    private static Pattern PROTOCOL = Pattern.compile("^https?://");
+
     public static String fixupUrl(String raw) {
         ParsedUrl url = ParsedUrl.parseUrl(raw);
 
@@ -36,5 +40,9 @@ public class HtsUtil {
         //url.setFragment(ByteString.EMPTY);
 
         return url.toString();
+    }
+
+    public static String stripProtocol(String url) {
+        return PROTOCOL.matcher(url).replaceFirst("");
     }
 }

@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,6 +46,7 @@ public class Httrack2WarcTest {
         TestUtils.unzip(HttrackRecordTest.class.getResourceAsStream("testcrawl-3.49-2.zip"), crawlPath);
 
         Httrack2Warc httrack2Warc = new Httrack2Warc();
+        httrack2Warc.addExclusion(Pattern.compile(".*/another"));
         httrack2Warc.setOutputDirectory(outdir);
         httrack2Warc.convert(crawlPath);
 
@@ -76,9 +78,6 @@ public class Httrack2WarcTest {
                         "response http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
                         "request http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
                         "metadata http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
-                        "response http://test.example.org/another\n" +
-                        "request http://test.example.org/another\n" +
-                        "metadata http://test.example.org/another\n" +
                         "response http://test.example.org/redirect\n" +
                         "request http://test.example.org/redirect\n" +
                         "metadata http://test.example.org/redirect\n" +

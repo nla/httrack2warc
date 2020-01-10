@@ -37,7 +37,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
-    private final static Set<String> exclusions = new HashSet<>(Arrays.asList(
+    private final static Set<String> ignoreFiles = new HashSet<>(Arrays.asList(
             "backblue.gif",
             "cookies.txt",
             "external.gif",
@@ -75,6 +75,7 @@ public class Httrack2Warc {
     private String cdxName = null;
     private boolean strict = false;
     private boolean rewriteLinks = false;
+    private final List<Pattern> urlExclusions = new ArrayList<>();
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -88,6 +89,12 @@ public class Httrack2Warc {
             LinkRewriter linkRewriter = rewriteLinks ? new LinkRewriter(crawl) : null;
 
             crawl.forEach(record -> {
+                if (isUrlExcluded(record.getUrl())) {
+                    log.info("Excluded {}", record.getUrl());
+                    processedFiles.add(record.getFilename());
+                    return;
+                }
+
                 // XXX: skip missing files if they were an error message
                 // this is a workaround until we can find a better way to handle cases like .delayed files and
                 // images renamed to .html
@@ -140,6 +147,11 @@ public class Httrack2Warc {
                     }
 
                     String responseHeader = record.getResponseHeader();
+                    if (responseHeader == null && record.getStatus() >= 300) {
+                        // if there's no response header but an error status we fabricate a header to record it
+                        // as that's the lesser evil than playback interpreting it incorrectly
+                        responseHeader = "HTTP/1.0 " + record.getStatus() + " \r\nContent-Type: " + contentType + "\r\nServer: httrack2warc reconstructed header\r\n\r\n";
+                    }
                     if (responseHeader != null) {
                         String truncated;
                         if (record.exists()) {
@@ -178,7 +190,7 @@ public class Httrack2Warc {
             Files.walk(sourceDirectory).forEach(path -> {
                 String file = sourceDirectory.relativize(path).toString();
                 if (processedFiles.contains(file) ||
-                        exclusions.contains(file) ||
+                        ignoreFiles.contains(file) ||
                         Files.isDirectory(path)) {
                     return;
                 }
@@ -196,6 +208,10 @@ public class Httrack2Warc {
         }
 
         log.debug("Finished WARC conversion.");
+    }
+
+    private boolean isUrlExcluded(String url) {
+        return urlExclusions.stream().anyMatch(p -> p.matcher(url).matches());
     }
 
     private static Pattern TRANSFER_ENCODING_RE = Pattern.compile("^\\s*Transfer-Encoding\\s*:.*\r\n", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
@@ -361,5 +377,9 @@ public class Httrack2Warc {
 
     public void setRewriteLinks(boolean rewriteLinks) {
         this.rewriteLinks = rewriteLinks;
+    }
+
+    public void addExclusion(Pattern pattern) {
+        urlExclusions.add(pattern);
     }
 }

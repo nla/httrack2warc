@@ -26,6 +26,7 @@ import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Main {
     private static final String USAGE = "Convert HTTrack web crawls to WARC files\n" +
@@ -43,7 +44,8 @@ public class Main {
             "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
             "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n" +
             "  --dont-rewrite-links         Don't rewrite links when the unmodified html is unavailable.\n" +
-            "  --strict                     Abort on issues normally considered a warning.\n";
+            "  --strict                     Abort on issues normally considered a warning.\n" +
+            "  -x, --exclude REGEX          Exclude URLs matching a regular expression.\n";
 
     public static void main(String[] args) throws IOException {
         Path crawldir = null;
@@ -96,6 +98,11 @@ public class Main {
 
                 case "--rewrite-links":
                     httrack2Warc.setRewriteLinks(true);
+                    break;
+
+                case "--exclude":
+                case "-x":
+                    httrack2Warc.addExclusion(Pattern.compile(args[++i]));
                     break;
 
                 default:

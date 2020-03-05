@@ -53,6 +53,10 @@ public class Httrack2WarcTest {
             for (WarcRecord warcRecord: warcReader) {
                 URI url = warcRecord instanceof WarcTargetRecord ? ((WarcTargetRecord) warcRecord).targetURI() : null;
                 summary.append(warcRecord.type()).append(" ").append(url).append("\n");
+
+                // HTTrack generates bad http requests containing a fragment which jwarc strictly rejects, just skip them
+                if (url != null && url.getFragment() != null) continue;
+
                 if (warcRecord instanceof WarcRequest) {
                     assertEquals(MessageVersion.HTTP_1_1, ((WarcRequest) warcRecord).http().version());
                 } else if (warcRecord instanceof WarcResponse) {
@@ -83,10 +87,10 @@ public class Httrack2WarcTest {
                         "request http://test.example.org/redirect\n" +
                         "metadata http://test.example.org/redirect\n" +
                         "response http://prefix.example.org/test.example.org/redirect\n" +
-                        "response http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
-                        "request http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
-                        "metadata http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
-                        "response http://prefix.example.org/test.example.org/page WITH _special_ chars.html\n" +
+                        "response http://test.example.org/page%2520WITH%2520%2522special%2522%2520chars.html\n" +
+                        "request http://test.example.org/page%2520WITH%2520%2522special%2522%2520chars.html\n" +
+                        "metadata http://test.example.org/page%2520WITH%2520%2522special%2522%2520chars.html\n" +
+                        "response http://prefix.example.org/test.example.org/page%20WITH%20_special_%20chars.html\n" +
                         "response http://test.example.org/image.gif\n" +
                         "request http://test.example.org/image.gif\n" +
                         "metadata http://test.example.org/image.gif\n" +

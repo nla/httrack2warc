@@ -76,6 +76,7 @@ public class Httrack2Warc {
     private boolean strict = false;
     private boolean rewriteLinks = false;
     private final List<Pattern> urlExclusions = new ArrayList<>();
+    private String redirectPrefix;
 
     public void convert(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
@@ -182,6 +183,19 @@ public class Httrack2Warc {
                 }
                 if (metadata.length() > 0) {
                     warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, metadata.toString());
+                }
+
+                // build synthetic redirect record
+                if (redirectPrefix != null) {
+                    String httrackUrl = redirectPrefix + record.getFilename();
+                    byte[] body = new byte[0];
+                    String header = "HTTP/1.1 301 Moved Permanently\r\n" +
+                            "Location: " + record.getUrl() + "\r\n" +
+                            "Server: httrack2warc synthetic redirect\r\n" +
+                            "Content-Length: " + body.length + "\r\n" +
+                            "\r\n";
+                    warc.writeResponseRecord(httrackUrl, null, sha1Digest(new ByteArrayInputStream(body)),
+                            UUID.randomUUID(), warcDate, body.length, header, new ByteArrayInputStream(body), null);
                 }
 
                 processedFiles.add(record.getFilename());
@@ -299,7 +313,7 @@ public class Httrack2Warc {
         return out.toString();
     }
 
-    private String sha1Digest(InputStream stream) throws IOException {
+    private static String sha1Digest(InputStream stream) throws IOException {
         MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA1");
@@ -381,5 +395,9 @@ public class Httrack2Warc {
 
     public void addExclusion(Pattern pattern) {
         urlExclusions.add(pattern);
+    }
+
+    public void setRedirectPrefix(String redirectPrefix) {
+        this.redirectPrefix = redirectPrefix;
     }
 }

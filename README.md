@@ -16,18 +16,21 @@ and run it under Java 8 or later.
 
 ```
 Usage:
-  java -jar httrack2warc-0.2.1-shaded.jar [OPTIONS...] -o outdir crawldir
+  httrack2warc [OPTIONS...] -o outdir crawldir
 
 Options:
-  -h, --help                   Show this screen.
-  -o, --outdir DIR             Directory to write output (default: current working directory).
-  -s, --size BYTES             WARC size target (default: 1GB).
-  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).
-  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: system local time).
-  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
-  -C, --compression none|gzip  Type of compression to use (default: gzip).
   --cdx FILENAME               Write a CDX index file for the generated WARCs.
+  -C, --compression none|gzip  Type of compression to use (default: gzip).
+  -x, --exclude REGEX          Exclude URLs matching a regular expression.
+  -h, --help                   Show this screen.
+  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).
+  -o, --outdir DIR             Directory to write output (default: current working directory).
+  --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.
+  --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)
+  -s, --size BYTES             WARC size target (default: 1GB).
   --strict                     Abort on issues normally considered a warning.
+  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: Asia/Seoul).
+  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
 ```
 
 ### Example
@@ -55,6 +58,28 @@ Replay the ingested WARC files using a replay tool like [pywb](https://github.co
     $ wayback
     [INFO]: Starting pywb Wayback Web Archive Replay on port 8080
     # Open in browser: http://localhost:8080/test/*/example.org/
+
+### Synthetic redirects
+
+When migrating from a HTTrack-based archive to a WARC-based one you may have the problem of breaking existing links
+which used the HTTrack manipulated filenames. To assist with this httrack2warc can synthesize redirects records from a
+HTTrack path to the reconstructed original live URL.
+
+For example suppose you have the following situation:
+  
+    Original URL: http://example.com/index.php?id=16
+    HTTrack URL: http://httrack/arc/2016/example.com/indexd455f.html
+
+Then setting this option:
+
+    --redirect-prefix http://httrack/arc/2016/
+
+Will generate a redirect like:
+
+    http://httrack/arc/2016/example.com/indexd455f.html -> http://example.com/index.php?id=16
+    
+You can then put a webserver rule on http://httrack/ that simply redirects all requests into your new WARC-based
+archive.
 
 ## Known issues and limitations
 
@@ -106,7 +131,7 @@ This will produce an executable jar file which you can run like so:
 
 ## License
 
-Copyright (C) 2017 National Library of Australia
+Copyright (C) 2017-2020 National Library of Australia
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
 

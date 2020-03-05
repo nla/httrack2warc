@@ -35,17 +35,18 @@ public class Main {
             "  httrack2warc [OPTIONS...] -o outdir crawldir\n" +
             "\n" +
             "Options:\n" +
-            "  -h, --help                   Show this screen.\n" +
-            "  -o, --outdir DIR             Directory to write output (default: current working directory).\n" +
-            "  -s, --size BYTES             WARC size target (default: 1GB).\n" +
-            "  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).\n" +
-            "  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: " + ZoneId.systemDefault() + ").\n" +
-            "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n" +
-            "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
             "  --cdx FILENAME               Write a CDX index file for the generated WARCs.\n" +
-            "  --dont-rewrite-links         Don't rewrite links when the unmodified html is unavailable.\n" +
+            "  -C, --compression none|gzip  Type of compression to use (default: gzip).\n" +
+            "  -x, --exclude REGEX          Exclude URLs matching a regular expression.\n" +
+            "  -h, --help                   Show this screen.\n" +
+            "  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).\n" +
+            "  -o, --outdir DIR             Directory to write output (default: current working directory).\n" +
+            "  --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.\n" +
+            "  --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)\n" +
+            "  -s, --size BYTES             WARC size target (default: 1GB).\n" +
             "  --strict                     Abort on issues normally considered a warning.\n" +
-            "  -x, --exclude REGEX          Exclude URLs matching a regular expression.\n";
+            "  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: " + ZoneId.systemDefault() + ").\n" +
+            "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n";
 
     public static void main(String[] args) throws IOException {
         Path crawldir = null;
@@ -100,6 +101,10 @@ public class Main {
                     httrack2Warc.setRewriteLinks(true);
                     break;
 
+                case "--redirect-prefix":
+                    httrack2Warc.setRedirectPrefix(args[++i]);
+                    break;
+
                 case "--exclude":
                 case "-x":
                     httrack2Warc.addExclusion(Pattern.compile(args[++i]));
@@ -127,6 +132,17 @@ public class Main {
             System.err.println("Try 'httrack2warc --help' for more information.");
             System.exit(1);
         }
+
+        StringBuilder optionsLine = new StringBuilder();
+        for (String arg: args) {
+            if (optionsLine.length() != 0) optionsLine.append(' ');
+            if (arg.contains(" ")) {
+                optionsLine.append('\'').append(arg.replace("'", "'\"'\"'")).append('\'');
+            } else {
+                optionsLine.append(arg);
+            }
+        }
+        httrack2Warc.addWarcInfoLine("httrack2warcOptions: " + optionsLine);
 
         String filename = crawldir.getFileName().toString();
         if (!Files.isDirectory(crawldir) && (filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))) {

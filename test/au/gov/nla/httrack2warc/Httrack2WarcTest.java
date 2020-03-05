@@ -48,6 +48,7 @@ public class Httrack2WarcTest {
         Httrack2Warc httrack2Warc = new Httrack2Warc();
         httrack2Warc.addExclusion(Pattern.compile(".*/another"));
         httrack2Warc.setOutputDirectory(outdir);
+        httrack2Warc.setRedirectPrefix("http://prefix.example.org/");
         httrack2Warc.convert(crawlPath);
 
         StringBuilder summary = new StringBuilder();
@@ -72,24 +73,31 @@ public class Httrack2WarcTest {
                         "response http://test.example.org/\n" +
                         "request http://test.example.org/\n" +
                         "metadata http://test.example.org/\n" +
+                        "response http://prefix.example.org/test.example.org/index.html\n" +
                         "response http://test.example.org/style.css\n" +
                         "request http://test.example.org/style.css\n" +
                         "metadata http://test.example.org/style.css\n" +
+                        "response http://prefix.example.org/test.example.org/style.css\n" +
                         "response http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
                         "request http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
                         "metadata http://test.example.org/query.html?page=1&query=2&FOO=3&&BaR=4&&#anchor\n" +
+                        "response http://prefix.example.org/test.example.org/query3b6f.html\n" +
                         "response http://test.example.org/redirect\n" +
                         "request http://test.example.org/redirect\n" +
                         "metadata http://test.example.org/redirect\n" +
+                        "response http://prefix.example.org/test.example.org/redirect\n" +
                         "response http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
                         "request http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
                         "metadata http://test.example.org/page%20WITH%20%22special%22%20chars.html\n" +
+                        "response http://prefix.example.org/test.example.org/page WITH _special_ chars.html\n" +
                         "response http://test.example.org/image.gif\n" +
                         "request http://test.example.org/image.gif\n" +
                         "metadata http://test.example.org/image.gif\n" +
+                        "response http://prefix.example.org/test.example.org/image.gif\n" +
                         "response http://test.example.org/image404.png\n" +
                         "request http://test.example.org/image404.png\n" +
-                        "metadata http://test.example.org/image404.png\n",
+                        "metadata http://test.example.org/image404.png\n" +
+                        "response http://prefix.example.org/test.example.org/image404.png\n",
                 summary.toString());
     }
 

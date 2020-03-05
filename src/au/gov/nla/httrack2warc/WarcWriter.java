@@ -148,7 +148,7 @@ class WarcWriter implements Closeable {
         compression.writeMember(warcRotor.channel, stream -> {
             stream.write(header.getBytes(UTF_8));
             body.writeTo(stream);
-            stream.write("\r\n".getBytes(UTF_8));
+            stream.write("\r\n\r\n".getBytes(UTF_8));
         });
 
         long endOfRecord = warcRotor.channel.position();

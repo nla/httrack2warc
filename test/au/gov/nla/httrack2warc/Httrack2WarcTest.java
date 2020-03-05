@@ -20,20 +20,17 @@ import au.gov.nla.httrack2warc.httrack.HttrackRecordTest;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.jwat.common.HeaderLine;
-import org.jwat.common.HttpHeader;
-import org.jwat.warc.WarcReader;
-import org.jwat.warc.WarcReaderFactory;
-import org.jwat.warc.WarcRecord;
+import org.netpreserve.jwarc.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.regex.Pattern;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class Httrack2WarcTest {
     @ClassRule
@@ -52,16 +49,16 @@ public class Httrack2WarcTest {
         httrack2Warc.convert(crawlPath);
 
         StringBuilder summary = new StringBuilder();
-        try (WarcReader warcReader = WarcReaderFactory.getReaderCompressed(Files.newInputStream(outdir.resolve("crawl-0.warc.gz")))) {
+        try (WarcReader warcReader = new WarcReader(outdir.resolve("crawl-0.warc.gz"))) {
             for (WarcRecord warcRecord: warcReader) {
-                String type = getHeader(warcRecord, "WARC-Type");
-                String url = getHeader(warcRecord, "WARC-Target-URI");
-                summary.append(type).append(" ").append(url).append("\n");
-                if (type.equals("request") || type.equals("response")) {
-                    HttpHeader httpHeader = warcRecord.getHttpHeader();
-                    assertEquals("HTTP/1.1", httpHeader.httpVersion);
-                } else if (type.equals("warcinfo")) {
-                    String payload = slurp(warcRecord.getPayloadContent());
+                URI url = warcRecord instanceof WarcTargetRecord ? ((WarcTargetRecord) warcRecord).targetURI() : null;
+                summary.append(warcRecord.type()).append(" ").append(url).append("\n");
+                if (warcRecord instanceof WarcRequest) {
+                    assertEquals(MessageVersion.HTTP_1_1, ((WarcRequest) warcRecord).http().version());
+                } else if (warcRecord instanceof WarcResponse) {
+                    assertEquals(MessageVersion.HTTP_1_1, ((WarcResponse) warcRecord).http().version());
+                } else if (warcRecord instanceof Warcinfo) {
+                    String payload = slurp(warcRecord.body().stream());
                     assertEquals("software: HTTrack/3.49-2 http://www.httrack.com/\r\n" +
                             "software: httrack2warc https://github.com/nla/httrack2warc\r\n" +
                             "httrackOptions: -%H http://test.example.org/\r\n", payload);
@@ -124,11 +121,5 @@ public class Httrack2WarcTest {
             baos.write(buf, 0, n);
         }
         return baos.toString("UTF-8");
-    }
-
-    private static String getHeader(WarcRecord record, String name) {
-        HeaderLine header = record.getHeader(name);
-        if (header == null) return null;
-        return header.value;
     }
 }

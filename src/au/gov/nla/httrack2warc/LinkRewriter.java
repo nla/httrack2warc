@@ -3,7 +3,6 @@ package au.gov.nla.httrack2warc;
 import au.gov.nla.httrack2warc.httrack.HtsUtil;
 import au.gov.nla.httrack2warc.httrack.HttrackCrawl;
 import net.htmlparser.jericho.*;
-import org.netpreserve.urlcanon.ByteString;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
 
@@ -53,8 +52,8 @@ public class LinkRewriter {
 
                 ParsedUrl parsed = ParsedUrl.parseUrl(url.toString());
                 Canonicalizer.SEMANTIC.canonicalize(parsed);
-                parsed.setQuery(ByteString.EMPTY);
-                parsed.setQuestionMark(ByteString.EMPTY);
+                parsed.setQuery("");
+                parsed.setQuestionMark("");
 
                 String original;
                 if (parsed.toString().equals("http://httrack/external.html") && url.getRawQuery() != null && url.getRawQuery().startsWith("link=")) {

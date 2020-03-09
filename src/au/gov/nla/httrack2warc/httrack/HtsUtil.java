@@ -16,7 +16,6 @@
 
 package au.gov.nla.httrack2warc.httrack;
 
-import org.netpreserve.urlcanon.ByteString;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
 

@@ -64,8 +64,8 @@ public class HtsTxtParserTest {
     public void test303() throws IOException {
         try (HtsTxtParser parser = new HtsTxtParser(new BufferedReader(new StringReader("date\tsize'/'remotesize\tflags(request:Update,Range state:File response:Modified,Chunked,gZipped)\tstatuscode\tstatus ('servermsg')\tMIME\tEtag|Date\tURL\tlocalfile\t(from URL)\n15:55:04\t0/0\t---M--\t303\terror ('')\t\t\thttp://www.antisf.com.au/component/weblinks/weblink/9-aussie-worldcon-2010?Itemid=89\t/pandoraworking/working/10063/20140108-1525/www.antisf.com.au/component/weblinks/weblink/9-aussie-worldcon-2010.80cd8f2.delayed\t(from http://www.antisf.com.au/the-stories/star-light-star-bright/42-content/newsflashes)")))) {
             while (parser.readRecord()) {
-                // just try to touch everything
                 assertNotNull(parser.url());
+                assertEquals(303, parser.status());
             }
         }
     }

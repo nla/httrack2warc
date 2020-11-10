@@ -32,9 +32,9 @@ class HtsTxtParser implements Closeable {
             "(?<size>-?\\d+)/(?<remotesize>-?\\d+)\\t" +
             "(?<flags>[A-Z-]{6})\\t" +
             "(?<statuscode>-?\\d+)\\t" +
-            "(?<status>\\w+)[ ]\\('(?<servermsg>[^']*)'\\)\\t" +
-            "(?<mime>\\S+)\\t" +
-            "(?<etag>\\S+)\\t" +
+            "(?<status>\\w+)[ ](error )?\\('(?<servermsg>[^']*)'\\)\\t" +
+            "(?<mime>\\S*)\\t" +
+            "(?<etag>\\S*)\\t" +
             "(?<url>.+)\\t" +
             "(?<localfile>[^\\t]*)\\t" +
             "\\(from[ ](?<via>.*)\\)$");

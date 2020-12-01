@@ -25,11 +25,12 @@ Options:
   -h, --help                   Show this screen.
   -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).
   -o, --outdir DIR             Directory to write output (default: current working directory).
+  --redirect-file PATTERN      Direct synthetic redirects to a separate set of WARC files.
   --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.
   --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)
   -s, --size BYTES             WARC size target (default: 1GB).
   --strict                     Abort on issues normally considered a warning.
-  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: Asia/Seoul).
+  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: ?).
   -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
 ```
 
@@ -80,6 +81,10 @@ Will generate a redirect like:
     
 You can then put a webserver rule on http://httrack/ that simply redirects all requests into your new WARC-based
 archive.
+
+You can configure synthentic redirects to be written to a separate set of WARC files using this option:
+
+    --redirect-file crawl-redirects-%d.warc.gz
 
 ## Known issues and limitations
 

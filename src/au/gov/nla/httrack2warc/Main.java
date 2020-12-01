@@ -41,6 +41,7 @@ public class Main {
             "  -h, --help                   Show this screen.\n" +
             "  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).\n" +
             "  -o, --outdir DIR             Directory to write output (default: current working directory).\n" +
+            "  --redirect-file PATTERN      Direct synthetic redirects to a separate set of WARC files.\n" +
             "  --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.\n" +
             "  --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)\n" +
             "  -s, --size BYTES             WARC size target (default: 1GB).\n" +
@@ -99,6 +100,10 @@ public class Main {
 
                 case "--rewrite-links":
                     httrack2Warc.setRewriteLinks(true);
+                    break;
+
+                case "--redirect-file":
+                    httrack2Warc.setRedirectFile(args[++i]);
                     break;
 
                 case "--redirect-prefix":

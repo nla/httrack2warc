@@ -26,8 +26,6 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
@@ -76,6 +74,7 @@ public class Httrack2Warc {
     private boolean strict = false;
     private boolean rewriteLinks = false;
     private final List<Pattern> urlExclusions = new ArrayList<>();
+    private String redirectFile;
     private String redirectPrefix;
 
     public void convert(Path sourceDirectory) throws IOException {
@@ -83,7 +82,8 @@ public class Httrack2Warc {
 
         CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));
         try (HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
-             WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, cdxWriter)) {
+             WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, cdxWriter);
+             RedirectWriter redirectWriter = new RedirectWriter(redirectPrefix, redirectFile == null || redirectPrefix == null ? warc : new WarcWriter(outputDirectory.resolve(redirectFile).toString(), compression, cdxWriter))) {
             String warcInfo = formatWarcInfo(crawl);
             Instant launchInstant = crawl.getLaunchTime().atZone(timezone).toInstant();
             Set<String> processedFiles = new HashSet<>();
@@ -121,7 +121,7 @@ public class Httrack2Warc {
                 String digest = null;
                 if (record.exists()) {
                     try (InputStream stream = record.openStream()) {
-                        digest = sha1Digest(stream);
+                        digest = Digests.sha1(stream);
                     }
                 }
 
@@ -141,7 +141,7 @@ public class Httrack2Warc {
                         linkRewriter.rewrite(stream, record.getFilename(), buffer);
                         byte[] data = buffer.toByteArray();
                         contentLength = data.length;
-                        digest = sha1Digest(new ByteArrayInputStream(data));
+                        digest = Digests.sha1(new ByteArrayInputStream(data));
                         body = new ByteArrayInputStream(data);
                     } else {
                         body = stream;
@@ -185,18 +185,7 @@ public class Httrack2Warc {
                     warc.writeMetadataRecord(record.getUrl(), responseRecordId, warcDate, metadata.toString());
                 }
 
-                // build synthetic redirect record
-                if (redirectPrefix != null) {
-                    String httrackUrl = redirectPrefix + record.getFilename();
-                    byte[] body = new byte[0];
-                    String header = "HTTP/1.1 301 Moved Permanently\r\n" +
-                            "Location: " + record.getUrl() + "\r\n" +
-                            "Server: httrack2warc synthetic redirect\r\n" +
-                            "Content-Length: " + body.length + "\r\n" +
-                            "\r\n";
-                    warc.writeResponseRecord(httrackUrl, null, sha1Digest(new ByteArrayInputStream(body)),
-                            UUID.randomUUID(), warcDate, body.length, header, new ByteArrayInputStream(body), null);
-                }
+                redirectWriter.write(record, warcDate);
 
                 processedFiles.add(record.getFilename());
             });
@@ -281,54 +270,6 @@ public class Httrack2Warc {
         }
     }
 
-    private static String encodePath(Path path) throws UnsupportedEncodingException {
-        return URLEncoder.encode(path.toString(), "UTF-8")
-                .replace("+", "%20")
-                .replace("%2F", "/");
-    }
-
-    private static final String BASE32_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
-
-    static String base32(byte[] data) {
-        if (data.length % 5 != 0) {
-            throw new IllegalArgumentException("Padding not implemented, data.length must be multiple of 5");
-        }
-        StringBuilder out = new StringBuilder(data.length / 5 * 8);
-
-        // process 40 bits at a time
-        for (int i = 0; i < data.length; i += 5) {
-            long buf = 0;
-
-            // read 5 bytes
-            for (int j = 0; j < 5; j++) {
-                buf <<= 8;
-                buf += data[i + j] & 0xff;
-            }
-
-            // write 8 base32 characters
-            for (int j = 0; j < 8; j++) {
-                out.append(BASE32_ALPHABET.charAt((int)((buf >> ((7-j) * 5)) & 31)));
-            }
-        }
-        return out.toString();
-    }
-
-    private static String sha1Digest(InputStream stream) throws IOException {
-        MessageDigest digest;
-        try {
-            digest = MessageDigest.getInstance("SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        byte[] buffer = new byte[1024 * 1024];
-        for (; ; ) {
-            int n = stream.read(buffer);
-            if (n < 0) break;
-            digest.update(buffer, 0, n);
-        }
-        return base32(digest.digest());
-    }
-
     public void setOutputDirectory(Path outputDirectory) {
         this.outputDirectory = outputDirectory;
     }
@@ -399,5 +340,9 @@ public class Httrack2Warc {
 
     public void setRedirectPrefix(String redirectPrefix) {
         this.redirectPrefix = redirectPrefix;
+    }
+
+    public void setRedirectFile(String redirectFile) {
+        this.redirectFile = redirectFile;
     }
 }

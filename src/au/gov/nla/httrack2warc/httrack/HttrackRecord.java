@@ -35,8 +35,8 @@ public class HttrackRecord {
     private final Path path;
     private final int status;
 
-    HttrackRecord(String filename, LocalDateTime timestamp, String url, String mime, String requestHeader,
-                  String responseHeader, String referrer, Path path, CacheEntry cacheEntry, int status) {
+    public HttrackRecord(String filename, LocalDateTime timestamp, String url, String mime, String requestHeader,
+                         String responseHeader, String referrer, Path path, CacheEntry cacheEntry, int status) {
         this.filename = filename;
         this.timestamp = timestamp;
         this.url = url;

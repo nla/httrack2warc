@@ -115,8 +115,6 @@ public class Httrack2Warc {
                 if (contentType == null) contentType = mimeTypes.forFilename(record.getFilename());
                 if (contentType == null) contentType = "application/octet-stream";
 
-                log.info("{} {}{} -> {}", record.getTimestamp().format(ISO_LOCAL_DATE_TIME), record.getFilename(), record.hasCacheData() ? " (cache)" : "", record.getUrl());
-
                 long contentLength = record.getSize();
                 String digest = null;
                 if (record.exists()) {
@@ -133,12 +131,13 @@ public class Httrack2Warc {
 
                 Instant warcDate = record.getTimestamp().atZone(timezone).toInstant();
 
+                long linksRewritten = 0;
                 try (InputStream stream = record.openStream()) {
                     InputStream body;
 
                     if (linkRewriter != null && record.getFilename().endsWith(".html") && !record.hasCacheData()) {
                         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-                        linkRewriter.rewrite(stream, record.getFilename(), buffer);
+                        linksRewritten = linkRewriter.rewrite(stream, record.getFilename(), buffer);
                         byte[] data = buffer.toByteArray();
                         contentLength = data.length;
                         digest = Digests.sha1(new ByteArrayInputStream(data));
@@ -168,6 +167,9 @@ public class Httrack2Warc {
                         warc.writeResourceRecord(record.getUrl(), contentType, digest, responseRecordId, warcDate, contentLength, body);
                     }
                 }
+
+                log.info("{} {}{}{} -> {}", record.getTimestamp().format(ISO_LOCAL_DATE_TIME), record.getFilename(),
+                        record.hasCacheData() ? " (cache)" : "", linksRewritten == 0 ? "" : " (" + linksRewritten + " links rewritten)", record.getUrl());
 
                 if (record.getRequestHeader() != null) {
                     warc.writeRequestRecord(record.getUrl(), responseRecordId, warcDate, record.getRequestHeader());

@@ -31,10 +31,11 @@ public class LinkRewriter {
         rewriter.rewrite(new FileInputStream(file), "www.ronboswell.com/main.html", System.out);
     }
 
-    void rewrite(InputStream stream, String filename, OutputStream out) throws IOException {
+    long rewrite(InputStream stream, String filename, OutputStream out) throws IOException {
         URI baseUrl = URI.create("http://httrack/" + filename);
         Source source = new Source(stream);
         OutputDocument outputDocument = new OutputDocument(source);
+        long linksRewritten = 0;
 
         for (StartTag tag : source.getAllStartTags()) {
             for (Attribute attr : tag.getURIAttributes()) {
@@ -72,12 +73,14 @@ public class LinkRewriter {
 
                 String replacement = "\"" + CharacterReference.encode(original, true) + "\"";
                 outputDocument.replace(attr.getValueSegmentIncludingQuotes(), replacement);
+                linksRewritten++;
             }
         }
 
         String encoding = source.getEncoding();
         if (encoding == null) encoding = "iso-8859-1"; // seems to be what jericho defaults to for reading
         outputDocument.writeTo(new OutputStreamWriter(out, encoding));
+        return linksRewritten;
     }
 
 }

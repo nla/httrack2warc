@@ -75,7 +75,9 @@ public class LinkRewriter {
             }
         }
 
-        outputDocument.writeTo(new OutputStreamWriter(out, source.getEncoding()));
+        String encoding = source.getEncoding();
+        if (encoding == null) encoding = "iso-8859-1"; // seems to be what jericho defaults to for reading
+        outputDocument.writeTo(new OutputStreamWriter(out, encoding));
     }
 
 }

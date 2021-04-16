@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.io.InputStream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class HttrackRecord {
     private static final Logger log = LoggerFactory.getLogger(HttrackRecord.class);
@@ -104,18 +106,32 @@ public class HttrackRecord {
         }
     }
 
-    public boolean exists() throws IOException {
+    public boolean exists() {
         return hasCacheData() || path != null && Files.exists(path);
     }
+
+    private static Pattern RE_DELAYED = Pattern.compile("\\.([a-z0-9]+)\\.delayed$");
 
     /**
      * Httrack sometimes logs 404 errors with a filename ending in .delayed. The actual file seems to be present as
      * a .html though so use that instead if present.
      */
     private void fixupDelayedPath() {
-        if (path == null || !path.toString().endsWith(".delayed") || Files.exists(path)) return;
-        Path fixedPath = Paths.get(path.toString().replaceFirst("\\.[a-z0-9]+\\.delayed$", ".html"));
-        if (!Files.exists(fixedPath)) return;
+        if (path == null || hasCacheData() || !path.toString().endsWith(".delayed") || Files.exists(path)) return;
+        Matcher m = RE_DELAYED.matcher(path.toString());
+        if (!m.find()) return;
+        String hash = m.group(1);
+        if (hash.length() > 4) {
+            hash = hash.substring(hash.length() - 4);
+        }
+        String extension = mime.startsWith("text/html") ? ".html" : url.replaceFirst(".*\\.", ".");
+        Path fixedPath = Paths.get(m.replaceFirst(hash + extension));
+        if (!Files.exists(fixedPath)) { // try the bare version too
+            fixedPath = Paths.get(m.replaceFirst(extension));
+        }
+        if (!Files.exists(fixedPath)) {
+            return;
+        }
         String fixedFilename = Paths.get(filename).getParent().resolve(fixedPath.getFileName()).toString();
         log.debug("Fixed path {} to {}", path, fixedPath);
         log.debug("Fixed filename {} to {}", path, fixedFilename);

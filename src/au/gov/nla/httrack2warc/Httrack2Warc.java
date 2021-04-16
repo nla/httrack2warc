@@ -147,8 +147,8 @@ public class Httrack2Warc {
     public void convertDirectory(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
-        CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));
-        try (HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
+        try (CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));
+             HttrackCrawl crawl = new HttrackCrawl(sourceDirectory);
              WarcWriter warc = new WarcWriter(outputDirectory.resolve(warcNamePattern).toString(), compression, cdxWriter);
              RedirectWriter redirectWriter = new RedirectWriter(redirectPrefix, redirectFile == null || redirectPrefix == null ? warc : new WarcWriter(outputDirectory.resolve(redirectFile).toString(), compression, cdxWriter))) {
             String warcInfo = formatWarcInfo(crawl);
@@ -202,7 +202,7 @@ public class Httrack2Warc {
                 try (InputStream stream = record.openStream()) {
                     InputStream body;
 
-                    if (linkRewriter != null && record.getFilename().endsWith(".html") && !record.hasCacheData()) {
+                    if (linkRewriter != null && record.getFilename() != null && record.getFilename().endsWith(".html") && !record.hasCacheData()) {
                         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
                         linksRewritten = linkRewriter.rewrite(stream, record.getFilename(), buffer);
                         byte[] data = buffer.toByteArray();
@@ -273,10 +273,6 @@ public class Httrack2Warc {
 
             if (cdxWriter != null) {
                 cdxWriter.finish();
-            }
-        } finally {
-            if (cdxWriter != null) {
-                cdxWriter.close();
             }
         }
 

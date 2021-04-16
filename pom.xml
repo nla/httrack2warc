@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>au.gov.nla</groupId>
     <artifactId>httrack2warc</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1-SNAPSHOT</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

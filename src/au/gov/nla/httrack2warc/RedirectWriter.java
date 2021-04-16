@@ -22,7 +22,7 @@ public class RedirectWriter implements Closeable {
 
     public void write(HttrackRecord record, Instant warcDate) throws IOException {
         // build synthetic redirect record
-        if (prefix != null) {
+        if (prefix != null && record.getFilename() != null) {
             String httrackUrl = prefix + record.getFilename();
             byte[] body = new byte[0];
             String header = "HTTP/1.1 301 Moved Permanently\r\n" +

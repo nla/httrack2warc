@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.io.InputStream;
 
@@ -44,7 +45,7 @@ public class HttrackRecord {
         this.requestHeader = requestHeader;
         this.responseHeader = responseHeader;
         this.referrer = referrer;
-        this.path = path;
+        this.path = fixupDelayedPath(path);
         this.cacheEntry = cacheEntry;
         this.status = status;
     }
@@ -99,6 +100,17 @@ public class HttrackRecord {
 
     public boolean exists() throws IOException {
         return hasCacheData() || path != null && Files.exists(path);
+    }
+
+    /**
+     * Httrack sometimes logs 404 errors with a filename ending in .delayed. The actual file seems to be present as
+     * a .html though so use that instead if present.
+     */
+    private static Path fixupDelayedPath(Path path) {
+        if (path == null || !path.endsWith(".delayed") || Files.exists(path)) return path;
+        Path fixedPath = Paths.get(path.toString().replaceFirst("\\.[a-z0-9]+\\.delayed$", ".html"));
+        if (!Files.exists(fixedPath)) return path;
+        return fixedPath;
     }
 
     public int getStatus() {

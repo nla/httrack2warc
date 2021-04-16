@@ -25,13 +25,15 @@ Options:
   -h, --help                   Show this screen.
   -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).
   -o, --outdir DIR             Directory to write output (default: current working directory).
+  -q, --quiet                  Decrease logging verbosity.
   --redirect-file PATTERN      Direct synthetic redirects to a separate set of WARC files.
   --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.
   --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)
   -s, --size BYTES             WARC size target (default: 1GB).
   --strict                     Abort on issues normally considered a warning.
-  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: ?).
+  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: Australia/Sydney).
   -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.
+  -v, --verbose                Increase logging verbosity.
 ```
 
 ### Example

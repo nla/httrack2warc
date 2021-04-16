@@ -8,6 +8,7 @@ import org.netpreserve.urlcanon.ParsedUrl;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,12 @@ public class LinkRewriter {
     }
 
     long rewrite(InputStream stream, String filename, OutputStream out) throws IOException {
-        URI baseUrl = URI.create("http://httrack/" + filename);
+        URI baseUrl;
+        try {
+            baseUrl = new URI("http", "httrack", filename);
+        } catch (URISyntaxException e) {
+            throw new IOException(e);
+        }
         Source source = new Source(stream);
         OutputDocument outputDocument = new OutputDocument(source);
         long linksRewritten = 0;

@@ -32,6 +32,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+import static java.util.Locale.ROOT;
 
 public class Httrack2Warc {
     private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
@@ -196,7 +197,8 @@ public class Httrack2Warc {
                 String file = sourceDirectory.relativize(path).toString();
                 if (processedFiles.contains(file) ||
                         ignoreFiles.contains(file) ||
-                        Files.isDirectory(path)) {
+                        Files.isDirectory(path) ||
+                        file.toLowerCase(ROOT).endsWith(".readme")) {
                     return;
                 }
 

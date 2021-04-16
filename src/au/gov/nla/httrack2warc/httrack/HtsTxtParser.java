@@ -52,7 +52,7 @@ class HtsTxtParser implements Closeable {
     }
 
     HtsTxtParser(InputStream txtReader) throws IOException {
-        this(new BufferedReader(new InputStreamReader(txtReader, StandardCharsets.ISO_8859_1)));
+        this(new BufferedReader(new InputStreamReader(txtReader, StandardCharsets.UTF_8)));
     }
 
     boolean readRecord() throws IOException {

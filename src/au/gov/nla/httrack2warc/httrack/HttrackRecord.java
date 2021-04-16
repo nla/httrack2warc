@@ -16,6 +16,9 @@
 
 package au.gov.nla.httrack2warc.httrack;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +28,9 @@ import java.time.LocalDateTime;
 import java.io.InputStream;
 
 public class HttrackRecord {
-    private final String filename;
+    private static final Logger log = LoggerFactory.getLogger(HttrackRecord.class);
+
+    private String filename;
     final LocalDateTime timestamp;
     final String url;
     final String mime;
@@ -33,7 +38,7 @@ public class HttrackRecord {
     final String responseHeader;
     private final String referrer;
     private final CacheEntry cacheEntry;
-    private final Path path;
+    private Path path;
     private final int status;
 
     public HttrackRecord(String filename, LocalDateTime timestamp, String url, String mime, String requestHeader,
@@ -45,9 +50,10 @@ public class HttrackRecord {
         this.requestHeader = requestHeader;
         this.responseHeader = responseHeader;
         this.referrer = referrer;
-        this.path = fixupDelayedPath(path);
+        this.path = path;
         this.cacheEntry = cacheEntry;
         this.status = status;
+        fixupDelayedPath();
     }
 
     public String getFilename() {
@@ -106,11 +112,15 @@ public class HttrackRecord {
      * Httrack sometimes logs 404 errors with a filename ending in .delayed. The actual file seems to be present as
      * a .html though so use that instead if present.
      */
-    private static Path fixupDelayedPath(Path path) {
-        if (path == null || !path.endsWith(".delayed") || Files.exists(path)) return path;
+    private void fixupDelayedPath() {
+        if (path == null || !path.toString().endsWith(".delayed") || Files.exists(path)) return;
         Path fixedPath = Paths.get(path.toString().replaceFirst("\\.[a-z0-9]+\\.delayed$", ".html"));
-        if (!Files.exists(fixedPath)) return path;
-        return fixedPath;
+        if (!Files.exists(fixedPath)) return;
+        String fixedFilename = Paths.get(filename).getParent().resolve(fixedPath.getFileName()).toString();
+        log.debug("Fixed path {} to {}", path, fixedPath);
+        log.debug("Fixed filename {} to {}", path, fixedFilename);
+        path = fixedPath;
+        filename = fixedFilename;
     }
 
     public int getStatus() {

@@ -110,7 +110,7 @@ public class HttrackRecord {
         return hasCacheData() || path != null && Files.exists(path);
     }
 
-    private static Pattern RE_DELAYED = Pattern.compile("\\.([a-z0-9]+)\\.delayed$");
+    private static final Pattern RE_DELAYED = Pattern.compile("\\.([a-z0-9]+)\\.delayed$");
 
     /**
      * Httrack sometimes logs 404 errors with a filename ending in .delayed. The actual file seems to be present as

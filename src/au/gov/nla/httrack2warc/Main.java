@@ -23,12 +23,17 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import static org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY;
+
 public class Main {
+    private static final String[] LOG_LEVELS = {"error", "warn", "info", "debug", "trace"};
+
     private static final String USAGE = "Convert HTTrack web crawls to WARC files\n" +
             "\n" +
             "Usage:\n" +
@@ -41,17 +46,20 @@ public class Main {
             "  -h, --help                   Show this screen.\n" +
             "  -n, --name PATTERN           WARC name pattern (default: crawl-%d.warc.gz).\n" +
             "  -o, --outdir DIR             Directory to write output (default: current working directory).\n" +
+            "  -q, --quiet                  Decrease logging verbosity.\n" +
             "  --redirect-file PATTERN      Direct synthetic redirects to a separate set of WARC files.\n" +
             "  --redirect-prefix URLPREFIX  Generates synthetic redirects from HTTrack-rewritten URLs to original URLs.\n" +
             "  --rewrite-links              When the unmodified HTML is unavailable attempt to rewrite links to undo HTTrack's URL mangling. (experimental)\n" +
             "  -s, --size BYTES             WARC size target (default: 1GB).\n" +
             "  --strict                     Abort on issues normally considered a warning.\n" +
             "  -Z, --timezone ZONEID        Timezone of HTTrack logs (default: " + ZoneId.systemDefault() + ").\n" +
-            "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n";
+            "  -I, --warcinfo 'KEY: VALUE'  Add extra lines to warcinfo record.\n" +
+            "  -v, --verbose                Increase logging verbosity.\n";
 
     public static void main(String[] args) throws IOException {
         Path crawldir = null;
         Httrack2Warc httrack2Warc = new Httrack2Warc();
+        int verbosity = Arrays.asList(LOG_LEVELS).indexOf("warn");
 
         for (int i = 0; i < args.length; i++) {
             switch (args[i]) {
@@ -115,6 +123,16 @@ public class Main {
                     httrack2Warc.addExclusion(Pattern.compile(args[++i]));
                     break;
 
+                case "--quiet":
+                case "-q":
+                    verbosity--;
+                    break;
+
+                case "--verbose":
+                case "-v":
+                    verbosity++;
+                    break;
+
                 default:
                     if (args[i].startsWith("-")) {
                         System.err.println("httrack2warc: Unrecognised option '" + args[i] + "'");
@@ -136,6 +154,12 @@ public class Main {
             System.err.println("httrack2warc: A crawl directory must be specified.");
             System.err.println("Try 'httrack2warc --help' for more information.");
             System.exit(1);
+        }
+
+        if (System.getProperty(DEFAULT_LOG_LEVEL_KEY) == null) {
+            if (verbosity >= LOG_LEVELS.length) verbosity = LOG_LEVELS.length - 1;
+            if (verbosity < 0) verbosity = 0;
+            System.setProperty(DEFAULT_LOG_LEVEL_KEY, LOG_LEVELS[verbosity]);
         }
 
         StringBuilder optionsLine = new StringBuilder();

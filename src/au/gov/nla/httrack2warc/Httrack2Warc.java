@@ -28,6 +28,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
@@ -80,10 +82,69 @@ public class Httrack2Warc {
     private String redirectFile;
     private String redirectPrefix;
 
-    public void convert(Path sourceDirectory) throws IOException {
+    public void convert(Path source) throws IOException {
         if (log == null) {
             log = LoggerFactory.getLogger(Httrack2Warc.class);
         }
+        String filename = source.getFileName().toString();
+        if (!Files.isDirectory(source) && (filename.endsWith(".tar.gz") || filename.endsWith(".tgz"))) {
+            convertTarball(source);
+        } else {
+            convertDirectory(source);
+        }
+    }
+
+    private void convertTarball(Path crawldir) throws IOException {
+        Path tmp = Files.createTempDirectory("httrack2warc");
+        log.debug("Unpacking {} to {}", crawldir, tmp);
+        try {
+            try {
+                int exitval = new ProcessBuilder("tar", "-C", tmp.toString(), "-zxf", crawldir.toAbsolutePath()
+                        .toString()).inheritIO().start().waitFor();
+                if (exitval != 0) {
+                    throw new IOException("Unable to untar " + crawldir);
+                }
+            } finally {
+                fixPermissions(tmp);
+            }
+            Optional<Path> cacheDir = Files.walk(tmp).filter(p -> p.getFileName().toString().equals("hts-cache") && Files.isDirectory(p)).findFirst();
+            if (!cacheDir.isPresent()) throw new IOException("Unable to find hts-cache directory in archive");
+            log.debug("Found httrack crawl under {}", cacheDir.get().getParent());
+            convertDirectory(cacheDir.get().getParent());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            deleteRecursively(tmp);
+        }
+    }
+
+    private void deleteRecursively(Path dir) throws IOException {
+        Files.walk(dir).sorted(Comparator.reverseOrder()).forEach(path -> {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                log.warn("Unable to delete " + dir, e);
+            }
+        });
+    }
+
+    private void fixPermissions(Path dir) throws IOException {
+        Set<PosixFilePermission> dirPerms = PosixFilePermissions.fromString("rwx------");
+        Set<PosixFilePermission> filePerms = PosixFilePermissions.fromString("rw-------");
+        Files.walk(dir).forEach(path -> {
+            try {
+                if (Files.isDirectory(path)) {
+                    Files.setPosixFilePermissions(path, dirPerms);
+                } else if (Files.isRegularFile(path)) {
+                    Files.setPosixFilePermissions(path, filePerms);
+                }
+            } catch (IOException e) {
+                log.warn("Unable to set permissions on " + path, e);
+            }
+        });
+    }
+
+    public void convertDirectory(Path sourceDirectory) throws IOException {
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
         CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));

@@ -89,7 +89,7 @@ public class HttrackRecord {
     public InputStream openStream() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.openStream();
-        } else if (path != null && Files.exists(path)) {
+        } else if (path != null && Files.isRegularFile(path)) {
             return Files.newInputStream(path);
         } else {
             return new ByteArrayInputStream(new byte[0]);
@@ -99,7 +99,7 @@ public class HttrackRecord {
     public long getSize() throws IOException {
         if (hasCacheData()) {
             return cacheEntry.getSize();
-        } else if (path != null && Files.exists(path)) {
+        } else if (path != null && Files.isRegularFile(path)) {
             return Files.size(path);
         } else {
             return 0;
@@ -107,7 +107,7 @@ public class HttrackRecord {
     }
 
     public boolean exists() {
-        return hasCacheData() || path != null && Files.exists(path);
+        return hasCacheData() || path != null && Files.isRegularFile(path);
     }
 
     private static final Pattern RE_DELAYED = Pattern.compile("\\.([a-z0-9]+)\\.delayed$");
@@ -117,7 +117,7 @@ public class HttrackRecord {
      * a .html though so use that instead if present.
      */
     private void fixupDelayedPath() {
-        if (path == null || hasCacheData() || !path.toString().endsWith(".delayed") || Files.exists(path)) return;
+        if (path == null || hasCacheData() || !path.toString().endsWith(".delayed") || Files.isRegularFile(path)) return;
         Matcher m = RE_DELAYED.matcher(path.toString());
         if (!m.find()) return;
         String hash = m.group(1);
@@ -126,10 +126,10 @@ public class HttrackRecord {
         }
         String extension = mime.startsWith("text/html") ? ".html" : url.replaceFirst(".*\\.", ".");
         Path fixedPath = Paths.get(m.replaceFirst(hash + extension));
-        if (!Files.exists(fixedPath)) { // try the bare version too
+        if (!Files.isRegularFile(fixedPath)) { // try the bare version too
             fixedPath = Paths.get(m.replaceFirst(extension));
         }
-        if (!Files.exists(fixedPath)) {
+        if (!Files.isRegularFile(fixedPath)) {
             return;
         }
         String fixedFilename = Paths.get(filename).getParent().resolve(fixedPath.getFileName()).toString();

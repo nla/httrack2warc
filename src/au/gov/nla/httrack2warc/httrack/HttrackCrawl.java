@@ -267,7 +267,7 @@ public class HttrackCrawl implements Closeable {
                     status = 302;
                     response = "HTTP/1.0 302 Found\r\nLocation: " + dst + "\r\nServer: httrack2warc reconstructed header\r\n\r\n";
                 } else {
-                    status = Integer.parseInt(response.split(" ")[1]);
+                    status = Integer.parseInt(response.split("[ \r\n]")[1]);
                 }
 
                 HttrackRecord record = new HttrackRecord(null, applyDateHeuristic(time), fixedUrl, null,

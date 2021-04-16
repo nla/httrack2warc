@@ -46,7 +46,7 @@ class HtsIoinfoParser implements Closeable {
         do {
             header = reader.readLine();
             if (header == null) return false;
-        } while (header.isEmpty());
+        } while (header.isEmpty() || header.startsWith("---> QUIT"));
 
         StringBuilder buffer = new StringBuilder();
         String prefix;

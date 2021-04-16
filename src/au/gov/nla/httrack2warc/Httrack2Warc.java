@@ -20,9 +20,11 @@ import au.gov.nla.httrack2warc.httrack.HttrackCrawl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +37,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 import static java.util.Locale.ROOT;
 
 public class Httrack2Warc {
-    private final static Logger log = LoggerFactory.getLogger(Httrack2Warc.class);
+    private Logger log;
     private final static Set<String> ignoreFiles = new HashSet<>(Arrays.asList(
             "backblue.gif",
             "cookies.txt",
@@ -79,6 +81,9 @@ public class Httrack2Warc {
     private String redirectPrefix;
 
     public void convert(Path sourceDirectory) throws IOException {
+        if (log == null) {
+            log = LoggerFactory.getLogger(Httrack2Warc.class);
+        }
         log.debug("Starting WARC conversion. sourceDirectory = {} outputDirectory = {}", sourceDirectory, outputDirectory);
 
         CdxWriter cdxWriter = cdxName == null ? null : new CdxWriter(outputDirectory.resolve(cdxName));

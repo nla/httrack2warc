@@ -28,6 +28,9 @@ public class TestUtils {
         try (ZipInputStream zip = new ZipInputStream(stream)) {
             for (ZipEntry entry = zip.getNextEntry(); entry != null; entry = zip.getNextEntry()) {
                 Path path = dest.resolve(entry.getName());
+                if (!path.normalize().startsWith(dest.normalize())) {
+                    throw new IOException("Bad zip entry");
+                }
                 if (entry.isDirectory()) {
                     Files.createDirectory(path);
                 } else {

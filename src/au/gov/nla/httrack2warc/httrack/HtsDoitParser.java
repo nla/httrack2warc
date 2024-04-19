@@ -30,7 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 class HtsDoitParser {
-    private static final Pattern DOIT_CMDLINE_RE = Pattern.compile(".*-O ?(?:\"([^\"]*)\"|([^ ]*)) .*");
+    private static final Pattern DOIT_CMDLINE_RE = Pattern.compile(".*-O1? ?(?:\"([^\"]*)\"|([^ ]*)) .*");
     private static final Pattern DOIT_TS_RE = Pattern.compile("File generated automatically on (.*), do NOT edit");
     static final DateTimeFormatter HTS_LOCAL_DATE = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss", Locale.US);
 

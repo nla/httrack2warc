@@ -28,7 +28,7 @@ class HtsLogParser implements Closeable {
     private static final Pattern HEADER_RE = Pattern.compile("HTTrack(?<version>[^ ]+) launched on " +
             "(?<date>\\w+, \\d\\d \\w+ \\d\\d\\d\\d \\d\\d:\\d\\d:\\d\\d) at " +
             "(?<seedsAndFilters>.*)");
-    private static final Pattern CMDLINE_RE = Pattern.compile("\\(.*-O ?(?:\"([^\"]*)\"|([^ ]*)) .*");
+    private static final Pattern CMDLINE_RE = Pattern.compile("\\(.*-O1? ?(?:\"([^\"]*)\"|([^ ]*)) .*");
 
     private final BufferedReader reader;
     String version;
@@ -63,9 +63,14 @@ class HtsLogParser implements Closeable {
 
     private void readCmdLine() throws IOException {
         String line = reader.readLine();
-        if (line == null) {
-            return;
-        }
+        if (line == null) return;
+
+        // skip a blank line
+        // some logs produced by winhttrack seem to have lines ending with \r\r\n which java reads as extra blank line
+        if (line.isEmpty()) line = reader.readLine();
+        if (line == null) return;
+        if (line.length() < 3) return;
+
         commandLine = line.substring(1, line.length() - 1).trim().split(" ", 2)[1];
         Matcher matcher = CMDLINE_RE.matcher(line);
         if (!matcher.matches()) {

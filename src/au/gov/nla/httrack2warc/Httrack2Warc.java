@@ -57,6 +57,8 @@ public class Httrack2Warc {
             "hts-cache/old.ndx",
             "hts-cache/old.txt",
             "hts-cache/old.zip",
+            "hts-cache/readme.txt",
+            "hts-cache/winprofile.ini",
             "hts-err.txt",
             "hts-ioinfo.txt",
             "hts-log.txt",

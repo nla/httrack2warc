@@ -19,6 +19,7 @@ package au.gov.nla.httrack2warc.httrack;
 import org.netpreserve.urlcanon.Canonicalizer;
 import org.netpreserve.urlcanon.ParsedUrl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 public class HtsUtil {
@@ -39,6 +40,24 @@ public class HtsUtil {
         //url.setFragment(ByteString.EMPTY);
 
         return url.toString();
+    }
+
+    /**
+     * Percent encode (mode 0)
+     */
+    public static String percentEncode(String str) {
+        byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
+        StringBuilder builder = new StringBuilder();
+        for (byte b : bytes) {
+            if (b <= 31 || b == 127 || b == ' ' || b == '"') {
+                builder.append("%").append(String.format("%02x", b));
+            } else if (b == '\\') {
+                builder.append("/");
+            } else {
+                builder.append((char) b);
+            }
+        }
+        return builder.toString();
     }
 
     public static String stripProtocol(String url) {

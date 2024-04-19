@@ -94,7 +94,7 @@ public class HttrackCrawl implements Closeable {
             try (HtsLogParser htsLog = new HtsLogParser(Files.newInputStream(dir.resolve(file)))) {
                 httrackVersion = htsLog.version;
                 launchTime = htsLog.launchTime;
-                outputDir = htsLog.outputDir;
+                outputDir = htsLog.outputDir == null ? null : HtsUtil.percentEncode(htsLog.outputDir);
                 httrackOptions = htsLog.commandLine;
             } catch (NoSuchFileException e) {
                 // try next
@@ -109,7 +109,7 @@ public class HttrackCrawl implements Closeable {
         try (InputStream stream = Files.newInputStream(logFile)) {
             HtsDoitParser doitLog = new HtsDoitParser(stream);
             launchTime = doitLog.crawlStartTime;
-            outputDir = doitLog.outputDir;
+            outputDir = doitLog.outputDir == null ? null : HtsUtil.percentEncode(doitLog.outputDir);
             httrackOptions = doitLog.commandLine;
         }
     }

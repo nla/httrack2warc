@@ -158,6 +158,10 @@ public class Httrack2Warc {
             Set<String> processedFiles = new HashSet<>();
             LinkRewriter linkRewriter = rewriteLinks ? new LinkRewriter(crawl) : null;
 
+            if (redirectWriter.warc != warc) {
+                redirectWriter.warc.writeWarcinfoRecord(UUID.randomUUID(), launchInstant, warcInfo);
+            }
+
             crawl.forEach(record -> {
                 if (isUrlExcluded(record.getUrl())) {
                     log.info("Excluded {}", record.getUrl());

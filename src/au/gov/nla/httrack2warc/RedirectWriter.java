@@ -13,7 +13,7 @@ import java.util.UUID;
  */
 public class RedirectWriter implements Closeable {
     private final String prefix;
-    private final WarcWriter warc;
+    final WarcWriter warc;
 
     public RedirectWriter(String prefix, WarcWriter warc) {
         this.prefix = prefix;

@@ -1,5 +1,6 @@
 package au.gov.nla.httrack2warc;
 
+import au.gov.nla.httrack2warc.httrack.HtsUtil;
 import au.gov.nla.httrack2warc.httrack.HttrackRecord;
 
 import java.io.ByteArrayInputStream;
@@ -23,7 +24,7 @@ public class RedirectWriter implements Closeable {
     public void write(HttrackRecord record, Instant warcDate) throws IOException {
         // build synthetic redirect record
         if (prefix != null && record.getFilename() != null) {
-            String httrackUrl = prefix + record.getFilename();
+            String httrackUrl = HtsUtil.fixupUrl(prefix + record.getFilename());
             byte[] body = new byte[0];
             String header = "HTTP/1.1 301 Moved Permanently\r\n" +
                     "Location: " + record.getUrl() + "\r\n" +
